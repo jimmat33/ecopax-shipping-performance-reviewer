@@ -2,3 +2,7 @@
 *.vsidx
 
 ecopax-shipping-performance-reviewer/.vs/ecopax-shipping-performance-reviewer/v17/.suo
+
+*.pyc
+
+data-1655127929240.xls
