@@ -35,7 +35,7 @@ def db_add_performance_entry(performance_prop_list, add_type):
 
                 performance_prop_list[0] = team_names_str
 
-                team_add_sql_statement = ''' INSERT INTO TeamPerformanceTable(TeamNames, JobDate, JobType, TimeWorking, TransportRefrence) VALUES(?,?,?,?,?) '''
+                team_add_sql_statement = ''' INSERT INTO TeamPerformanceTable(TeamNames, JobDate, JobType, TimeWorking, TransportRefrence, Filepath) VALUES(?,?,?,?,?,?) '''
 
                 cur.execute(team_add_sql_statement, performance_prop_list)
             else:
@@ -46,7 +46,7 @@ def db_add_performance_entry(performance_prop_list, add_type):
                 performance_prop_list[0] = performance_prop_list[0].capitalize()
 
                 if len(rows) == 0:
-                    individual_add_sql_satatement = ''' INSERT INTO IndividualPerformanceTable(WorkerName, JobDate, JobType, JobTimeWorking, TransportRefrence, WorkerJob, IndividualTime, NumJobMembers) VALUES (?,?,?,?,?,?,?,?) '''
+                    individual_add_sql_satatement = ''' INSERT INTO IndividualPerformanceTable(WorkerName, JobDate, JobType, JobTimeWorking, TransportRefrence, WorkerJob, IndividualTime, NumJobMembers, FilePath) VALUES (?,?,?,?,?,?,?,?,?) '''
                     cur.execute(individual_add_sql_satatement, performance_prop_list)
 
 
@@ -58,6 +58,70 @@ def db_add_performance_entry(performance_prop_list, add_type):
 
     db_connection.close()
 
+
+def db_add_excel_file(file_props):
+    db_connection = db_connect()
+
+    with db_connection:
+        cur = db_connection.cursor()
+
+        add_file_sql_statement = ''' INSERT INTO ExcelFileTable(Filepath, FileName, DateRange) VALUES(?,?,?) '''
+
+        try:
+            cur.execute(add_file_sql_statement, file_props)
+        except Exception:
+            pass
+
+        db_connection.commit()
+
+    db_connection.close()
+
+
+def db_get_excel_file(filename):
+    db_connection = db_connect()
+    file_list = []
+
+    with db_connection:
+        cur = db_connection.cursor()
+
+        get_file_sql_statement = ''' SELECT FilePath, FileName, DateRange FROM ExcelFileTable WHERE FilePath =? '''
+
+        try:
+            cur.execute(get_file_sql_statement, [filename])
+
+        except Exception:
+            pass
+        
+        
+        file_list = cur.fetchall()
+        db_connection.commit()
+
+    db_connection.close()
+
+    return file_list
+
+
+def db_remove_excel_file(filepath):
+    db_connection = db_connect()
+
+    with db_connection:
+        cur = db_connection.cursor()
+
+        remove_file_sql_statement_1 = ''' DELETE FROM IndividualPerformanceTable WHERE FilePath =? '''
+        remove_file_sql_statement_2 = ''' DELETE FROM TeamPerformanceTable WHERE FilePath =? '''
+        remove_file_sql_statement_3 = ''' DELETE FROM ExcelFileTable WHERE FilePath =? '''
+
+        try:
+            cur.execute(remove_file_sql_statement_1, [filepath])
+            cur.execute(remove_file_sql_statement_2, [filepath])
+            cur.execute(remove_file_sql_statement_3, [filepath])
+        except Exception:
+            pass
+
+        db_connection.commit()
+
+    db_connection.close()
+        
 
 
 

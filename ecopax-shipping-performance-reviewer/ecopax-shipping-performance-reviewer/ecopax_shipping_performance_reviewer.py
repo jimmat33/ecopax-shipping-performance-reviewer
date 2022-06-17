@@ -1,8 +1,12 @@
 from TWExportExcelFile import *
+from PerformanceReviewGUI import *
 
 def main():
-    test_sheet = TWExportExcelFile(r'C:\Users\jmattison\Desktop\performance-reviewer\data-1655127929240.xls')
-    test_sheet.process_data()
+    pass
+    
 
 if __name__ == '__main__':
+    gui_frame = PerformanceReviewGUI()
+    gui_frame.run_gui()
+
     main()

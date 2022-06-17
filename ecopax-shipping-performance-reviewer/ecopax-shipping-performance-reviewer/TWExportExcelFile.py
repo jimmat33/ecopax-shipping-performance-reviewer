@@ -5,12 +5,14 @@ import datetime
 
 class TWExportExcelFile(object):
     def __init__(self, old_filepath):
-        self._filepath = old_filepath
+        self.old_filepath = old_filepath
         self._filepath = self.fix_file_ext()
+
+        self.process_file()
         
 
     def fix_file_ext(self):
-        base_file = self._filepath
+        base_file = self.old_filepath
         name, ext = base_file.split('.')
         new_file = '{}.{}'.format(name, 'csv')
 
@@ -30,10 +32,20 @@ class TWExportExcelFile(object):
 
         return fst_lst
 
+    
+    def process_file(self):
+        filename = self._filepath.split('/')[-1].split('.')[0]
+
+        date_range_list = self.process_data()
+        date_range = date_range_list[0] + ' - ' + date_range_list[1]
+
+        db_add_excel_file([self._filepath, filename, date_range])
+
+
 
     def process_data(self):
-
-        
+        date_range_list = []
+        fin_date_range_list = ['','']
         file_path = Path(self._filepath)
         file_extension = file_path.suffix.lower()[1:]
 
@@ -63,11 +75,12 @@ class TWExportExcelFile(object):
             row_str = row_set[2]
             row = row_str.split('\t')
 
-
             team_names = self.get_team_names(row[team_names_column])
+
             booking_date = row[booking_date_column]
             if len(booking_date) > 10:
                 booking_date = booking_date[:-5].strip()
+        
             job_type = row[job_type_column]
             transport_refrence = row[transport_refrence_column]
 
@@ -90,8 +103,9 @@ class TWExportExcelFile(object):
             except Exception:
                 converted_total_job_time = 'error'
 
+
             if isinstance(team_names, list) and len(team_names) != 0:
-                db_add_performance_entry([team_names, booking_date, job_type, converted_total_job_time, transport_refrence], 'team')
+                db_add_performance_entry([team_names, booking_date, job_type, converted_total_job_time, transport_refrence, self._filepath], 'team')
 
                 for person_name in team_names:
                     if team_names.index(person_name) == 0:
@@ -106,7 +120,23 @@ class TWExportExcelFile(object):
                     except Exception:
                         converted_individual_job_time = 'error'
 
-                    db_add_performance_entry([person_name, booking_date, job_type,converted_total_job_time, transport_refrence,worker_job, converted_individual_job_time, len(team_names)], 'individual')
+                    db_add_performance_entry([person_name, booking_date, job_type,converted_total_job_time, transport_refrence,worker_job, converted_individual_job_time, len(team_names), self._filepath], 'individual')
+                    date_range_list.append(booking_date)
+
+
+        i = 0
+        while i < len(date_range_list):
+            date_range_list[i] = datetime.datetime.strptime(date_range_list[i],'%m/%d/%Y')
+            i += 1
+
+        earliest_date = min(date_range_list)
+        latest_date = max(date_range_list)
+
+        fin_date_range_list[0] = datetime.datetime.strftime(earliest_date, '%m/%d/%Y')
+        fin_date_range_list[1] = datetime.datetime.strftime(latest_date, '%m/%d/%Y')
+
+        return fin_date_range_list
+
 
 
 
