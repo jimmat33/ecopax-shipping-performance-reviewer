@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import *
 import tkinter.font
 import os
+from tkinter.tix import Select
 from tkinter.ttk import *
 from  tkinter import ttk
 from tkcalendar import Calendar, DateEntry
@@ -22,6 +23,7 @@ class PerformanceReviewGUI(object):
         self.excel_index = 1
         self.progress_bar = 0
         self.progress_bar_label = 0
+        self.excel_sheet_frame = 0
 
 
     def run_gui(self):
@@ -45,13 +47,13 @@ class PerformanceReviewGUI(object):
         self.remove_sheet_button = Button(self.root, text = 'Remove Spreadsheet', state = 'normal', command = self.remove_spreadsheet_btn_click)
         self.remove_sheet_button.place(x = 25, y = 105, width = 220, height = 55)
 
-
+        '''
  #table select all checkbox
         self.check_var = IntVar(value=0)
-        self.check_all_excel_chkbox = Checkbutton(self.root, text = 'Select all Excel files',variable = self.check_var, onvalue = 1, offvalue = 0)
+        self.check_all_excel_chkbox = Checkbutton(self.root, text = 'Select all Excel files',variable = self.check_var, onvalue = 1, offvalue = 0, command=self.select_all_excel)
         self.check_all_excel_chkbox.place(x = 300, y = 10, width = 400, height = 25)
         #if deleting all, do popup check
-
+        '''
 
 #excel sheet table
         self.excel_sheet_frame = Frame(self.root)
@@ -177,12 +179,12 @@ class PerformanceReviewGUI(object):
         self.generate_report_button.place(x = 350, y = 280, width = 185, height = 40)
         #add msgbox popup with filename
 
-
+        '''
 #select all queries checkbox
         self.check_all_queries_chkbox = Checkbutton(self.root, text = 'Select all Queries',variable = self.check_var, onvalue = 1, offvalue = 0)
         self.check_all_queries_chkbox.place(x = 350, y = 340, width = 150, height = 25)
         #if deleting all, do popup check
-
+        '''
 
 #report table
         self.report_frame = Frame(self.root)
@@ -249,7 +251,6 @@ class PerformanceReviewGUI(object):
         formatted_correct = filepath_parts[3:-1]
         filepath_str = ''
 
-        time.sleep(1)
         for part in formatted_correct:
             if part == formatted_correct[0]:
                 filepath_str = filepath_str + part
@@ -262,6 +263,7 @@ class PerformanceReviewGUI(object):
         self.excel_sheet_frame.insert(parent = '', index = 'end', iid = self.excel_index, text = '', values = (formatted_filename, filepath_str, file_lst[0][2]))
 
         db_remove_excel_file(new_filename)
+
 
 
     def remove_spreadsheet_btn_click(self):
