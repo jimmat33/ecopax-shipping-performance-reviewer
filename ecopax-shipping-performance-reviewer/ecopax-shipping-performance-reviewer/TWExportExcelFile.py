@@ -120,7 +120,7 @@ class TWExportExcelFile(object):
                     except Exception:
                         converted_individual_job_time = 'error'
 
-                    db_add_performance_entry([person_name, booking_date, job_type,converted_total_job_time, transport_refrence,worker_job, converted_individual_job_time, len(team_names), self._filepath], 'individual')
+                    db_add_performance_entry([person_name.strip(), booking_date, job_type,converted_total_job_time, transport_refrence,worker_job, converted_individual_job_time, len(team_names), self._filepath], 'individual')
                     date_range_list.append(booking_date)
 
 

@@ -24,6 +24,10 @@ class PerformanceReviewGUI(object):
         self.progress_bar = 0
         self.progress_bar_label = 0
         self.excel_sheet_frame = 0
+        self.worker_job_options = [] #get from database
+        self.worker_team_options = [] #get from database
+        self.job_type_options = [] #get from database
+        self.individual_worker_options = [] #get from database
 
 
     def run_gui(self):
@@ -96,9 +100,7 @@ class PerformanceReviewGUI(object):
         self.job_type_label = Label(self.root, text= 'Job Type: ', font = dropdown_font, state = 'normal')
         self.job_type_label.place(x = 25, y = 320, height = 25)
 
-        job_type_options = ['1', '2'] #get from databas
-
-        self.job_type_dropdown = Combobox(self.root, values=job_type_options)
+        self.job_type_dropdown = Combobox(self.root, values=self.job_type_options)
         self.job_type_dropdown.place(x = 90, y = 320, width = 180, height = 25)
 
 
@@ -106,9 +108,7 @@ class PerformanceReviewGUI(object):
         self.worker_team_label = Label(self.root, text= 'Worker Team: ', font = dropdown_font, state = 'normal')
         self.worker_team_label.place(x = 25, y = 355, height = 25)
 
-        worker_team_options = ['1', '2'] #get from databas
-
-        self.worker_team_dropdown = Combobox(self.root, values=worker_team_options)
+        self.worker_team_dropdown = Combobox(self.root, values=self.worker_team_options)
         self.worker_team_dropdown.place(x = 120, y = 355, width = 180, height = 25)
 
 
@@ -116,9 +116,7 @@ class PerformanceReviewGUI(object):
         self.individual_worker_label = Label(self.root, text= 'Individual Worker: ', font = dropdown_font, state = 'normal')
         self.individual_worker_label.place(x = 25, y = 390, height = 25)
 
-        individual_worker_options = ['1', '2'] #get from databas
-
-        self.individual_worker_dropdown = Combobox(self.root, values=individual_worker_options)
+        self.individual_worker_dropdown = Combobox(self.root, values=self.individual_worker_options)
         self.individual_worker_dropdown.place(x = 140, y = 390, width = 180, height = 25)
 
 
@@ -126,9 +124,7 @@ class PerformanceReviewGUI(object):
         self.worker_job_label = Label(self.root, text= 'Worker Job: ', font = dropdown_font, state = 'normal')
         self.worker_job_label.place(x = 25, y = 425, height = 25)
 
-        worker_job_options = ['1', '2'] #get from databas
-
-        self.worker_job_dropdown = Combobox(self.root, values=worker_job_options)
+        self.worker_job_dropdown = Combobox(self.root, values=self.worker_job_options)
         self.worker_job_dropdown.place(x = 108, y = 425, width = 180, height = 25)
 
 
@@ -155,7 +151,7 @@ class PerformanceReviewGUI(object):
         self.dataview_type_label = Label(self.root, text= 'Dataview Type: ', font = dropdown_font, state = 'normal')
         self.dataview_type_label.place(x = 25, y = 495, height = 25)
 
-        dataview_type_options = ['1', '2'] #get from databas
+        dataview_type_options = ['Percent Share(Pie)', 'Amount Comparison(Bar)', 'Trend(Scatter)'] 
 
         self.dataview_type_dropdown = Combobox(self.root, values=dataview_type_options)
         self.dataview_type_dropdown.place(x = 126, y = 495, width = 180, height = 25)
@@ -241,33 +237,66 @@ class PerformanceReviewGUI(object):
             excel_sheet = TWExportExcelFile(filename)
 
 
-        filename_spl = filename.split('.')
-        new_filename = filename_spl[0] +'.csv'
+            filename_spl = filename.split('.')
+            new_filename = filename_spl[0] +'.csv'
 
-        file_lst = db_get_excel_file(new_filename)
-
-
-        filepath_parts = file_lst[0][0].split('/')
-        formatted_correct = filepath_parts[3:-1]
-        filepath_str = ''
-
-        for part in formatted_correct:
-            if part == formatted_correct[0]:
-                filepath_str = filepath_str + part
-            else:
-                filepath_str = filepath_str + '/' + part
-
-        formatted_filename = filepath_parts[-1].split('.')[0]
+            file_lst = db_get_excel_file(new_filename)
 
 
-        self.excel_sheet_frame.insert(parent = '', index = 'end', iid = self.excel_index, text = '', values = (formatted_filename, filepath_str, file_lst[0][2]))
+            filepath_parts = file_lst[0][0].split('/')
+            formatted_correct = filepath_parts[3:-1]
+            filepath_str = ''
 
-        db_remove_excel_file(new_filename)
+            for part in formatted_correct:
+                if part == formatted_correct[0]:
+                    filepath_str = filepath_str + part
+                else:
+                    filepath_str = filepath_str + '/' + part
 
+            formatted_filename = filepath_parts[-1].split('.')[0]
+
+
+            self.excel_sheet_frame.insert(parent = '', index = 'end', iid = self.excel_index, text = '', values = (formatted_filename, filepath_str, file_lst[0][2]))
+            self.excel_index += 1
+
+            '''
+            self.worker_job_options = [] #get from database
+            self.worker_team_options = [] #get from database
+            self.job_type_options = [] #get from database
+            self. individual_worker_options = [] #get from database
+            '''
+            self.worker_team_options = self.worker_team_options + list(set(db_get_data_from_column('TeamNames','team')))
+            self.worker_job_options = self.worker_job_options + list(set(db_get_data_from_column('WorkerJob','individual')))
+            self.job_type_options =  self.job_type_options + list(set(db_get_data_from_column('JobType','team')))
+            self.individual_worker_options = self.individual_worker_options + list(set(db_get_data_from_column('WorkerName','individual')))
+
+            self.job_type_dropdown['values'] = self.job_type_options
+            self.worker_team_dropdown['values'] = self.worker_team_options
+            self.individual_worker_dropdown['values'] = self.individual_worker_options
+            self.worker_job_dropdown['values'] = self.worker_job_options
 
 
     def remove_spreadsheet_btn_click(self):
-        pass
+        try:
+            selected_item_index = self.excel_sheet_frame.focus()
+            item = self.excel_sheet_frame.item(selected_item_index)
+            if selected_item_index != '':
+
+                file_name = str(item['values'][0]) + '.csv' 
+                filepath_list = db_get_all_excel_filepaths()
+                filepath = ''
+
+                for data in filepath_list:
+                    if data[0].find(file_name) != -1:
+                        filepath = data[0]
+
+                db_remove_excel_file(filepath)
+                
+                self.excel_sheet_frame.delete(selected_item_index)
+
+        except:
+            pass
+
         
         
         
