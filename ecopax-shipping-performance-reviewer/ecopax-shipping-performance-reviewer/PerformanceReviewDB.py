@@ -25,15 +25,16 @@ def db_add_performance_entry(performance_prop_list, add_type):
             if add_type == 'team':
 
                 team_names_str = ''
-                team_names = performance_prop_list[0].strip()
+                team_names = performance_prop_list[0]
 
                 for name_val in team_names:
-                    if team_names.index(name_val) == 0:
-                        team_names_str = name_val.strip().capitalize()
-                    else:
-                        team_names_str = team_names_str + '<' + name_val.strip().capitalize()
+                    if name_val != '':
+                        if team_names.index(name_val) == 0:
+                            team_names_str = name_val.capitalize()
+                        else:
+                            team_names_str = team_names_str + '<' + name_val.capitalize()
 
-                performance_prop_list[0] = team_names_str.strip()
+                performance_prop_list[0] = team_names_str
 
                 team_add_sql_statement = ''' INSERT INTO TeamPerformanceTable(TeamNames, JobDate, JobType, TimeWorking, TransportRefrence, Filepath) VALUES(?,?,?,?,?,?) '''
 
@@ -41,15 +42,16 @@ def db_add_performance_entry(performance_prop_list, add_type):
             else:
 
                 performance_prop_list[0] = performance_prop_list[0].capitalize().strip()
-                check_sql_statement = ''' SELECT WorkerName, TransportRefrence FROM IndividualPerformanceTable WHERE WorkerName =? AND TransportRefrence =? '''
-                cur.execute(check_sql_statement, [performance_prop_list[0], performance_prop_list[4]])
-                rows = cur.fetchall()
+                if performance_prop_list[0] != '':
+                    check_sql_statement = ''' SELECT WorkerName, TransportRefrence FROM IndividualPerformanceTable WHERE WorkerName =? AND TransportRefrence =? '''
+                    cur.execute(check_sql_statement, [performance_prop_list[0], performance_prop_list[4]])
+                    rows = cur.fetchall()
 
-                performance_prop_list[0] = performance_prop_list[0].capitalize().strip()
+                    performance_prop_list[0] = performance_prop_list[0].capitalize().strip()
 
-                if len(rows) == 0:
-                    individual_add_sql_satatement = ''' INSERT INTO IndividualPerformanceTable(WorkerName, JobDate, JobType, JobTimeWorking, TransportRefrence, WorkerJob, IndividualTime, NumJobMembers, FilePath) VALUES (?,?,?,?,?,?,?,?,?) '''
-                    cur.execute(individual_add_sql_satatement, performance_prop_list)
+                    if len(rows) == 0:
+                        individual_add_sql_satatement = ''' INSERT INTO IndividualPerformanceTable(WorkerName, JobDate, JobType, JobTimeWorking, TransportRefrence, WorkerJob, IndividualTime, NumJobMembers, FilePath) VALUES (?,?,?,?,?,?,?,?,?) '''
+                        cur.execute(individual_add_sql_satatement, performance_prop_list)
 
 
         except Exception:

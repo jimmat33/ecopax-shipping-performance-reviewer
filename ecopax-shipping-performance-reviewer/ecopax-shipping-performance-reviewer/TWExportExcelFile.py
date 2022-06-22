@@ -28,7 +28,9 @@ class TWExportExcelFile(object):
             return []
         
         fst_lst = team_names_lst.split('&')
-        fst_lst[-1] = fst_lst[-1].split('/')[0]
+        fst_lst[-1] = fst_lst[-1].split('/')[0].strip()
+
+        
 
         return fst_lst
 
@@ -98,8 +100,8 @@ class TWExportExcelFile(object):
                 job_end_time = datetime.datetime.strptime(job_end_time, '%H:%M')
 
                 total_job_time = job_end_time - job_start_time
-                total_job_time = int(total_job_time.total_seconds())
-                converted_total_job_time = str(datetime.timedelta(seconds = total_job_time))[:-3]
+                total_job_time = int(total_job_time.total_seconds() / 60)
+                converted_total_job_time = str(total_job_time)
             except Exception:
                 converted_total_job_time = 'error'
 
@@ -113,10 +115,10 @@ class TWExportExcelFile(object):
                     else:
                         worker_job = 'Unloader'
 
-                    time_divided = total_job_time / len(team_names)
+                    time_divided = int(total_job_time / len(team_names))
 
                     try:
-                        converted_individual_job_time = str(datetime.timedelta(seconds = time_divided))[:-3]
+                        converted_individual_job_time = str(time_divided)
                     except Exception:
                         converted_individual_job_time = 'error'
 

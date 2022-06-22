@@ -146,7 +146,7 @@ class PerformanceReviewGUI(object):
         self.ytd_button = Button(self.root, text='YTD', state = 'normal')
         self.ytd_button.place(x = 277, y = 460, width = 65, height = 27)
 
-
+        '''
 #Dataview type dropdown
         self.dataview_type_label = Label(self.root, text= 'Dataview Type: ', font = dropdown_font, state = 'normal')
         self.dataview_type_label.place(x = 25, y = 495, height = 25)
@@ -155,10 +155,10 @@ class PerformanceReviewGUI(object):
 
         self.dataview_type_dropdown = Combobox(self.root, values=dataview_type_options)
         self.dataview_type_dropdown.place(x = 126, y = 495, width = 180, height = 25)
-
+        '''
 
 #genrate query button
-        self.generate_query_button = Button(self.root, text = 'Generate Query', state = 'normal')
+        self.generate_query_button = Button(self.root, text = 'Generate Query', state = 'normal', command = self.generate_query_btn_clicked)
         self.generate_query_button.place(x = 25, y = 530, width = 150, height = 45)
 
 #delete selected queries button
@@ -270,10 +270,10 @@ class PerformanceReviewGUI(object):
             self.job_type_options =  self.job_type_options + list(set(db_get_data_from_column('JobType','team')))
             self.individual_worker_options = self.individual_worker_options + list(set(db_get_data_from_column('WorkerName','individual')))
 
-            self.job_type_dropdown['values'] = self.job_type_options
-            self.worker_team_dropdown['values'] = self.worker_team_options
-            self.individual_worker_dropdown['values'] = self.individual_worker_options
-            self.worker_job_dropdown['values'] = self.worker_job_options
+            self.job_type_dropdown['values'] = sorted([''] + self.job_type_options)
+            self.worker_team_dropdown['values'] = sorted([''] + self.worker_team_options)
+            self.individual_worker_dropdown['values'] = sorted([''] + self.individual_worker_options)
+            self.worker_job_dropdown['values'] = sorted([''] + self.worker_job_options)
 
 
     def remove_spreadsheet_btn_click(self):
@@ -296,6 +296,10 @@ class PerformanceReviewGUI(object):
 
         except:
             pass
+
+
+    def generate_query_btn_clicked(self):
+        pass
 
         
         
