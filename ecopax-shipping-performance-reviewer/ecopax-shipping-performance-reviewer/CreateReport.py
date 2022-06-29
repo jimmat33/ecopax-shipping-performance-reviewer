@@ -130,8 +130,8 @@ def run_excel(str_path):
     ind_modifiable_pivot(wb, ind_master, ind_mod_sheet)
     team_modifiable_pivot(wb, team_master, team_mod_sheet)
     loading_vs_nonloading_pivot(wb, ind_master, loading_v_nonloading_sheet)
-    ind_loading_time_trend_pivot(wb, ind_master, ind_ltt_sheet)
     team_loading_time_trend_pivot(wb, team_master, team_ltt_sheet)
+    ind_loading_time_trend_pivot(wb, ind_master, ind_ltt_sheet)
 
     wb.Close(True)
     excel.Quit()
