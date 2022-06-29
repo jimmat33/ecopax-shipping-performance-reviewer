@@ -1,6 +1,6 @@
 import os
 import sqlite3 as sl
-from datetime import datetime
+from datetime import date
 
 def db_connect():
     db_file_name = os.path.abspath('performance-review.db')
@@ -61,6 +61,75 @@ def db_add_performance_entry(performance_prop_list, add_type):
 
 
     db_connection.close()
+
+
+def db_get_individual_data():
+    db_connection = db_connect()
+    ret_list = []
+    month_lst = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    with db_connection:
+        cur = db_connection.cursor()
+
+        get_sql_statement = ''' SELECT WorkerName, JobDate, JobType, JobTimeWorking, WorkerJob, IndividualTime FROM IndividualPerformanceTable '''
+
+        cur.execute(get_sql_statement)
+
+        ret_list = cur.fetchall()
+
+        db_connection.commit()
+    db_connection.close()
+
+    i = 0
+    while i < len(ret_list):
+        ret_list[i] = list(ret_list[i])
+
+        date_str = ret_list[i][1]
+        date_lst = date_str.split('/')
+
+        ret_list[i][1] = date(int(date_lst[2]), int(date_lst[0]), int(date_lst[1]))
+
+        month_str = month_lst[int(ret_list[i][1].month) - 1]
+        ret_list[i].append(720)
+        ret_list[i].append(month_str)
+        i += 1
+
+    return ret_list
+
+
+def db_get_team_data():
+    db_connection = db_connect()
+    ret_list = []
+    month_lst = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    with db_connection:
+        cur = db_connection.cursor()
+
+        get_sql_statement = ''' SELECT TeamNames, JobDate, JobType, TimeWorking FROM TeamPerformanceTable '''
+
+        cur.execute(get_sql_statement)
+
+        ret_list = cur.fetchall()
+
+        db_connection.commit()
+    db_connection.close()
+
+    i = 0
+    while i < len(ret_list):
+        ret_list[i] = list(ret_list[i])
+
+        date_str = ret_list[i][1]
+        date_lst = date_str.split('/')
+
+        ret_list[i][1] = date(int(date_lst[2]), int(date_lst[0]), int(date_lst[1]))
+        
+        month_str = month_lst[int(ret_list[i][1].month) - 1]
+        new_str = ret_list[i][0].replace('<', ', ')
+        ret_list[i][0] = new_str
+        ret_list[i].append(month_str)
+        i += 1
+
+    return ret_list
 
 
 def db_get_data_from_column(column_name, table_name):
@@ -187,7 +256,26 @@ def db_remove_excel_file(filepath):
     db_connection.close()
         
 
+def db_clear_database():
+    db_connection = db_connect()
 
+    with db_connection:
+        cur = db_connection.cursor()
+
+        remove_file_sql_statement_1 = ''' DELETE FROM IndividualPerformanceTable '''
+        remove_file_sql_statement_2 = ''' DELETE FROM TeamPerformanceTable '''
+        remove_file_sql_statement_3 = ''' DELETE FROM ExcelFileTable '''
+
+        try:
+            cur.execute(remove_file_sql_statement_1)
+            cur.execute(remove_file_sql_statement_2)
+            cur.execute(remove_file_sql_statement_3)
+        except Exception:
+            pass
+
+        db_connection.commit()
+
+    db_connection.close()
 
 
 

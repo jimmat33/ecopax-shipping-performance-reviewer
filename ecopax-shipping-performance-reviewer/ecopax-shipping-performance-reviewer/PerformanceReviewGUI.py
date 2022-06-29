@@ -10,11 +10,14 @@ from tkinter import filedialog
 from TWExportExcelFile import *
 import time
 from PerformanceReviewDB import *
+from datetime import date
+from CreateReport import *
+import subprocess
 
 class PerformanceReviewGUI(object):
     def __init__(self):
         self.root = Tk()
-        self.root.geometry('800x600')
+        self.root.geometry('800x400')
         self.root.title("Shipping Performance Reviewer")
         self.root.resizable(False, False)
         img = tk.PhotoImage(file= (os.path.abspath('gui_icon.png')))
@@ -28,10 +31,14 @@ class PerformanceReviewGUI(object):
         self.worker_team_options = [] #get from database
         self.job_type_options = [] #get from database
         self.individual_worker_options = [] #get from database
+        self.start_date = 0
+        self.end_date = 0
+        self.query_list = []
 
 
     def run_gui(self):
         self.init_widgits()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.mainloop()
 
 
@@ -89,99 +96,102 @@ class PerformanceReviewGUI(object):
 
         self.excel_sheet_frame.pack()
             #check database for things to import here if james wants persistent data
-
-
+        
 #report settings label
         self.report_settings_label = Label(self.root, text= 'Generate Report Queries:', font = large_widget_font, state = 'normal')
-        self.report_settings_label.place(x = 25, y = 285, height = 25)
+        #self.report_settings_label.place(x = 25, y = 250, height = 25)
+
+#predefined report dropdown
+        self.report_type_label = Label(self.root, text= 'Predefined Query:', font = dropdown_font, state = 'normal')
+        #self.report_type_label.place(x = 25, y = 285, height = 25)
+
+        report_type_options = ['','Individual Loading Time Trend', 'Team Loading Time Trend', 'Individual Unloading Time Trend', 'Team Unloading Time Trend',
+                               'Individual Loading vs. Non-Loading Time', 'Number of Loads Done', 'Driver Efficiency', 'Total Loading Time']
+
+        self.report_type_dropdown = Combobox(self.root, values=report_type_options)
+        #self.report_type_dropdown.place(x = 135, y = 285, width = 232, height = 25)
 
 
 #job type dropdown
         self.job_type_label = Label(self.root, text= 'Job Type: ', font = dropdown_font, state = 'normal')
-        self.job_type_label.place(x = 25, y = 320, height = 25)
+        #self.job_type_label.place(x = 25, y = 320, height = 25)
 
         self.job_type_dropdown = Combobox(self.root, values=self.job_type_options)
-        self.job_type_dropdown.place(x = 90, y = 320, width = 180, height = 25)
+        #self.job_type_dropdown.place(x = 90, y = 320, width = 180, height = 25)
 
 
 #worker team dropdown
         self.worker_team_label = Label(self.root, text= 'Worker Team: ', font = dropdown_font, state = 'normal')
-        self.worker_team_label.place(x = 25, y = 355, height = 25)
+        #self.worker_team_label.place(x = 25, y = 355, height = 25)
 
         self.worker_team_dropdown = Combobox(self.root, values=self.worker_team_options)
-        self.worker_team_dropdown.place(x = 120, y = 355, width = 180, height = 25)
+        #self.worker_team_dropdown.place(x = 120, y = 355, width = 180, height = 25)
 
 
 #individual worker dropdown
         self.individual_worker_label = Label(self.root, text= 'Individual Worker: ', font = dropdown_font, state = 'normal')
-        self.individual_worker_label.place(x = 25, y = 390, height = 25)
+        #self.individual_worker_label.place(x = 25, y = 390, height = 25)
 
         self.individual_worker_dropdown = Combobox(self.root, values=self.individual_worker_options)
-        self.individual_worker_dropdown.place(x = 140, y = 390, width = 180, height = 25)
+        #self.individual_worker_dropdown.place(x = 140, y = 390, width = 180, height = 25)
 
 
 #worker job dropdown
         self.worker_job_label = Label(self.root, text= 'Worker Job: ', font = dropdown_font, state = 'normal')
-        self.worker_job_label.place(x = 25, y = 425, height = 25)
+        #self.worker_job_label.place(x = 25, y = 425, height = 25)
 
         self.worker_job_dropdown = Combobox(self.root, values=self.worker_job_options)
-        self.worker_job_dropdown.place(x = 108, y = 425, width = 180, height = 25)
+        #self.worker_job_dropdown.place(x = 108, y = 425, width = 180, height = 25)
 
 
 #date range picker
         self.worker_job_label = Label(self.root, text= 'Date Range: ', font = dropdown_font, state = 'normal')
-        self.worker_job_label.place(x = 25, y = 460, height = 25)
+        #self.worker_job_label.place(x = 25, y = 460, height = 25)
 
         self.start_date = DateEntry(self.root, width= 7, foreground= "white",bd=2)
         self.start_date.delete(0, 'end')
-        self.start_date.place(x = 105, y = 460, height = 25)
+        #self.start_date.place(x = 105, y = 460, height = 25)
 
         self.to_label = Label(self.root, text= 'to', font = dropdown_font, state = 'normal')
-        self.to_label.place(x = 178, y = 460, height = 25)
+        #self.to_label.place(x = 178, y = 460, height = 25)
 
         self.end_date = DateEntry(self.root, width= 7, foreground= "white",bd=2)
         self.end_date.delete(0, 'end')
-        self.end_date.place(x = 200, y = 460, height = 25)
+        #self.end_date.place(x = 200, y = 460, height = 25)
 
-        self.ytd_button = Button(self.root, text='YTD', state = 'normal')
-        self.ytd_button.place(x = 277, y = 460, width = 65, height = 27)
+        self.ytd_button = Button(self.root, text='YTD', state = 'normal', command = self.ytd_btn_clicked)
+        #self.ytd_button.place(x = 277, y = 460, width = 65, height = 27)
 
-        '''
+        
 #Dataview type dropdown
         self.dataview_type_label = Label(self.root, text= 'Dataview Type: ', font = dropdown_font, state = 'normal')
-        self.dataview_type_label.place(x = 25, y = 495, height = 25)
+        #self.dataview_type_label.place(x = 25, y = 495, height = 25)
 
         dataview_type_options = ['Percent Share(Pie)', 'Amount Comparison(Bar)', 'Trend(Scatter)'] 
 
         self.dataview_type_dropdown = Combobox(self.root, values=dataview_type_options)
-        self.dataview_type_dropdown.place(x = 126, y = 495, width = 180, height = 25)
-        '''
+        #self.dataview_type_dropdown.place(x = 126, y = 495, width = 180, height = 25)
+        
 
 #genrate query button
         self.generate_query_button = Button(self.root, text = 'Generate Query', state = 'normal', command = self.generate_query_btn_clicked)
-        self.generate_query_button.place(x = 25, y = 530, width = 150, height = 45)
+        #self.generate_query_button.place(x = 25, y = 530, width = 150, height = 45)
 
 #delete selected queries button
         self.delete_selected_queries_button = Button(self.root, text = 'Delete Selected Queries', state = 'normal')
-        self.delete_selected_queries_button.place(x = 190, y = 530, width = 150, height = 45)
-
+        #self.delete_selected_queries_button.place(x = 185, y = 530, width = 150, height = 45)
+        
 #go to file loc button
-        self.goto_report_loc_button = Button(self.root, text = 'Go To Report Folder', state = 'normal')
-        self.goto_report_loc_button.place(x = 550, y = 280, width = 185, height = 40)
+        self.goto_report_loc_button = Button(self.root, text = 'Go To Report Folder', state = 'normal', command = self.open_file_loc)
+        self.goto_report_loc_button.place(x = 585, y = 280, width = 185, height = 40)
 
 
 #Generate report button
-        self.generate_report_button = Button(self.root, text = 'Generate Report', state = 'normal')
-        self.generate_report_button.place(x = 350, y = 280, width = 185, height = 40)
+        self.generate_report_button = Button(self.root, text = 'Generate Report', state = 'normal', command = self.generate_report)
+        self.generate_report_button.place(x = 385, y = 280, width = 185, height = 40)
         #add msgbox popup with filename
 
         '''
-#select all queries checkbox
-        self.check_all_queries_chkbox = Checkbutton(self.root, text = 'Select all Queries',variable = self.check_var, onvalue = 1, offvalue = 0)
-        self.check_all_queries_chkbox.place(x = 350, y = 340, width = 150, height = 25)
-        #if deleting all, do popup check
-        '''
-
 #report table
         self.report_frame = Frame(self.root)
         self.report_frame.place(x = 350, y = 365, width = 435, height = 205)
@@ -212,21 +222,16 @@ class PerformanceReviewGUI(object):
 
         count = 1
         self.report_frame.insert(parent = '', index = 'end', iid = count, text = '', values = ('Select Driver, Dee, Time Share, YTD', 'Percent Time Share(Pie)'))
-        
-        '''
-#progress bar
-        self.progress_bar = Progressbar(self.root, maximum=100)
-        self.progress_bar.place(x = 0, y = 588, height = 12, width = 540)
-        #self.progress_bar['value'] = 0
-
-
-#progress bar label
-        #self.progress_bar_label = Label(self.root, text= 'Progress label placeholder', font = widget_font, state = 'normal')
-        self.progress_bar_label = Label(self.root, text= '', font = widget_font, state = 'normal')
-        self.progress_bar_label.place(x = 555, y = 580, height = 20)
-
         '''
 
+    def open_file_loc(self):
+        FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
+        path = os.path.abspath('Performance Review Reports')
+
+        if os.path.isdir(path):
+            subprocess.run([FILEBROWSER_PATH, path])
+        elif os.path.isfile(path):
+            subprocess.run([FILEBROWSER_PATH, '/select,', os.path.normpath(path)])
 
     def import_spreadsheet_btn_click(self):
         filename_list = filedialog.askopenfilenames(initialdir = "", title = "Select a File", filetypes = (("all files", "*.*"),))
@@ -300,17 +305,27 @@ class PerformanceReviewGUI(object):
 
     def generate_query_btn_clicked(self):
         pass
+        
+
+
+    def ytd_btn_clicked(self):
+        current_year = date.today().year
+
+        jan = date(current_year, 1, 1)
+        end = date.today()
+        
+        self.start_date.set_date(jan)
+        self.end_date.set_date(end)
+
+
+    def generate_report(self):
+        create_report()
+
+    def on_closing(self):
+        db_clear_database()
+        self.root.destroy()
 
         
-        
-        
-    '''
-    def update_progress_bar(self):
-        if self.progress_bar['value'] == 100:
-            self.progress_bar['value'] == 0
-        else:
-            self.progress_bar['value'] += 25
-    '''
 
 
 

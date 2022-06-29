@@ -21,6 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CreateReport.py" />
     <Compile Include="PerformanceReviewDB.py" />
     <Compile Include="PerformanceReviewGUI.py" />
     <Compile Include="TWExportExcelFile.py" />
