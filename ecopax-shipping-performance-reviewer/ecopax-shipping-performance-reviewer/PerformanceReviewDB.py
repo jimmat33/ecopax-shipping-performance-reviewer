@@ -90,7 +90,7 @@ def db_get_individual_data():
         ret_list[i][1] = date(int(date_lst[2]), int(date_lst[0]), int(date_lst[1]))
 
         month_str = month_lst[int(ret_list[i][1].month) - 1]
-        ret_list[i].append(720)
+        ret_list[i].append(410)
         ret_list[i].append(month_str)
         i += 1
 

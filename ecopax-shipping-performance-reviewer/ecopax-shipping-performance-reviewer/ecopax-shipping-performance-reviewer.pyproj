@@ -24,6 +24,7 @@
     <Compile Include="CreateReport.py" />
     <Compile Include="PerformanceReviewDB.py" />
     <Compile Include="PerformanceReviewGUI.py" />
+    <Compile Include="setup.py" />
     <Compile Include="TWExportExcelFile.py" />
     <Compile Include="ecopax_shipping_performance_reviewer.py" />
   </ItemGroup>

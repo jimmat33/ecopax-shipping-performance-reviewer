@@ -1,4 +1,3 @@
-from calendar import c
 import win32com.client as win32
 from pywintypes import com_error
 from pathlib import Path
@@ -90,7 +89,6 @@ def run_excel(str_path):
     excel = win32.gencache.EnsureDispatch('Excel.Application')
 
     # excel can be visible or not
-    excel.Visible = False 
     
     # try except for file / path
     try:
@@ -135,6 +133,7 @@ def run_excel(str_path):
 
     wb.Close(True)
     excel.Quit()
+
 
 
 

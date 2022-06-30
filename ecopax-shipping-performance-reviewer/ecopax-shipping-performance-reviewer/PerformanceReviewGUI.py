@@ -5,7 +5,6 @@ import os
 from tkinter.tix import Select
 from tkinter.ttk import *
 from  tkinter import ttk
-from tkcalendar import Calendar, DateEntry
 from tkinter import filedialog
 from TWExportExcelFile import *
 import time
@@ -148,15 +147,15 @@ class PerformanceReviewGUI(object):
         self.worker_job_label = Label(self.root, text= 'Date Range: ', font = dropdown_font, state = 'normal')
         #self.worker_job_label.place(x = 25, y = 460, height = 25)
 
-        self.start_date = DateEntry(self.root, width= 7, foreground= "white",bd=2)
-        self.start_date.delete(0, 'end')
+        #self.start_date = DateEntry(self.root, width= 7, foreground= "white",bd=2)
+        #self.start_date.delete(0, 'end')
         #self.start_date.place(x = 105, y = 460, height = 25)
 
         self.to_label = Label(self.root, text= 'to', font = dropdown_font, state = 'normal')
         #self.to_label.place(x = 178, y = 460, height = 25)
 
-        self.end_date = DateEntry(self.root, width= 7, foreground= "white",bd=2)
-        self.end_date.delete(0, 'end')
+        #self.end_date = DateEntry(self.root, width= 7, foreground= "white",bd=2)
+        #self.end_date.delete(0, 'end')
         #self.end_date.place(x = 200, y = 460, height = 25)
 
         self.ytd_button = Button(self.root, text='YTD', state = 'normal', command = self.ytd_btn_clicked)
