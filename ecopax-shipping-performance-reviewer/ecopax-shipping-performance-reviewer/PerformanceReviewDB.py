@@ -1,5 +1,6 @@
 import os
 import sqlite3 as sl
+import re
 from datetime import date
 
 def db_connect():
@@ -30,8 +31,10 @@ def db_add_performance_entry(performance_prop_list, add_type):
                 for name_val in team_names:
                     if name_val != '':
                         if team_names.index(name_val) == 0:
+                            name_val = re.sub('[\"\']', '', name_val)
                             team_names_str = name_val.capitalize()
                         else:
+                            name_val = re.sub('[\"\']', '', name_val)
                             team_names_str = team_names_str + '<' + name_val.capitalize()
 
                 performance_prop_list[0] = team_names_str
@@ -47,6 +50,7 @@ def db_add_performance_entry(performance_prop_list, add_type):
                     cur.execute(check_sql_statement, [performance_prop_list[0], performance_prop_list[4]])
                     rows = cur.fetchall()
 
+                    performance_prop_list[0] = re.sub('[\"\']', '', performance_prop_list[0])
                     performance_prop_list[0] = performance_prop_list[0].capitalize().strip()
 
                     if len(rows) == 0:
@@ -86,7 +90,8 @@ def db_get_individual_data():
 
         date_str = ret_list[i][1]
         date_lst = date_str.split('/')
-
+        if len(date_lst[2]) > 4:
+            date_lst[2] = date_lst[2][0:4]
         ret_list[i][1] = date(int(date_lst[2]), int(date_lst[0]), int(date_lst[1]))
 
         month_str = month_lst[int(ret_list[i][1].month) - 1]
@@ -120,6 +125,9 @@ def db_get_team_data():
 
         date_str = ret_list[i][1]
         date_lst = date_str.split('/')
+
+        if len(date_lst[2]) > 4:
+            date_lst[2] = date_lst[2][0:4]
 
         ret_list[i][1] = date(int(date_lst[2]), int(date_lst[0]), int(date_lst[1]))
         

@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 from PerformanceReviewDB import *
+import re
 import datetime
 
 class TWExportExcelFile(object):
@@ -16,9 +17,12 @@ class TWExportExcelFile(object):
         name, ext = base_file.split('.')
         new_file = '{}.{}'.format(name, 'csv')
 
-        with open(base_file , encoding="utf_16") as f1:
-            with open(new_file, 'w') as f2:
-                f2.write(f1.read())
+        try:
+            with open(base_file , encoding="utf_16") as f1:
+                with open(new_file, 'w') as f2:
+                    f2.write(f1.read())
+        except:
+            pass
 
         return new_file
 
@@ -30,6 +34,8 @@ class TWExportExcelFile(object):
         fst_lst = team_names_lst.split('&')
         fst_lst[-1] = fst_lst[-1].split('/')[0].strip()
 
+        for name in fst_lst:
+            name = re.sub('[\"\']', '', name)
         
 
         return fst_lst
@@ -50,6 +56,7 @@ class TWExportExcelFile(object):
         fin_date_range_list = ['','']
         file_path = Path(self._filepath)
         file_extension = file_path.suffix.lower()[1:]
+        total_job_time = 0
 
         if file_extension == 'xlsx':
             df = pd.read_excel(self._filepath, engine='openpyxl')
@@ -68,8 +75,8 @@ class TWExportExcelFile(object):
         booking_date_column = column_list.index('SL - Date and time of booking')
         job_type_column = column_list.index('SL - Resource name')
         transport_refrence_column = column_list.index('SL - Transport reference')
-        job_start_time_column = column_list.index('SL - Custom timestamp 2 date and time ')
-        job_end_time_column = column_list.index('SL - Custom timestamp 3 date and time ')
+        job_start_time_column = column_list.index('"SL - Custom timestamp 2 date and time "')
+        job_end_time_column = column_list.index('"SL - Custom timestamp 3 date and time "')
         
         df = df.reset_index()
         
@@ -81,13 +88,16 @@ class TWExportExcelFile(object):
 
             booking_date = row[booking_date_column]
             if len(booking_date) > 10:
-                booking_date = booking_date[:-5].strip()
+                booking_date = booking_date[:-9].strip()
         
             job_type = row[job_type_column]
+            job_type = re.sub('[\"\']', '', job_type)
+            job_type = job_type.strip()
+
             transport_refrence = row[transport_refrence_column]
 
-            job_start_time = row[job_start_time_column][-5:].strip()
-            job_end_time = row[job_end_time_column][-5:].strip()
+            job_start_time = row[job_start_time_column][-8:-3].strip()
+            job_end_time = row[job_end_time_column][-8:-3].strip()
 
             if len(job_start_time[:-3]) == 1:
                 job_start_time = '0' + job_start_time
@@ -128,16 +138,21 @@ class TWExportExcelFile(object):
 
         i = 0
         while i < len(date_range_list):
-            date_range_list[i] = datetime.datetime.strptime(date_range_list[i],'%m/%d/%Y')
+            try:
+                date_range_list[i] = datetime.datetime.strptime(date_range_list[i],'%m/%d/%Y')
+            except Exception:
+                pass
             i += 1
 
         earliest_date = min(date_range_list)
         latest_date = max(date_range_list)
-
-        fin_date_range_list[0] = datetime.datetime.strftime(earliest_date, '%m/%d/%Y')
-        fin_date_range_list[1] = datetime.datetime.strftime(latest_date, '%m/%d/%Y')
-
+        try:
+            fin_date_range_list[0] = datetime.datetime.strftime(earliest_date, '%m/%d/%Y')
+            fin_date_range_list[1] = datetime.datetime.strftime(latest_date, '%m/%d/%Y')
+        except Exception:
+            pass
         return fin_date_range_list
+        
 
 
 
