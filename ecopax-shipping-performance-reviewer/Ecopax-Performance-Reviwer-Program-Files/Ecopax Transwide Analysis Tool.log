@@ -1,0 +1,8 @@
+pandas\io\parsers\readers.pyc:1128: FutureWarning: The error_bad_lines argument has been deprecated and will be removed in a future version. Use on_bad_lines in the future.
+
+
+Skipping line 31: ',' expected after '"'
+Skipping line 371: ',' expected after '"'
+Skipping line 372: ',' expected after '"'
+Skipping line 373: ',' expected after '"'
+Skipping line 416: unexpected end of data
