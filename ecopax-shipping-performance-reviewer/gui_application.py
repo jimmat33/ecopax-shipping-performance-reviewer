@@ -9,7 +9,7 @@ from tkinter.ttk import Scrollbar, Button, Frame
 from create_report import create_report
 from performance_review_db import (db_get_excel_file, db_get_all_excel_filepaths,
                                    db_remove_excel_file, db_clear_database)
-import excel_file
+from excel_file import TWExportExcelFile
 
 
 class PerformanceReviewGUI():
@@ -22,8 +22,12 @@ class PerformanceReviewGUI():
         self.root.geometry('800x400')
         self.root.title("Shipping Performance Reviewer")
         self.root.resizable(False, False)
-        img = tk.PhotoImage(file=(os.path.abspath('gui_icon.png')))
-        self.root.tk.call('wm', 'iconphoto', self.root._w, img)
+        try:
+            img = tk.PhotoImage(file=(os.path.abspath('gui_icon.png')))
+            self.root.tk.call('wm', 'iconphoto', self.root._w, img)
+        except Exception:
+            img = tk.PhotoImage(file=(os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\gui_icon.png')))
+            self.root.tk.call('wm', 'iconphoto', self.root._w, img)
         self.excel_index = 1
 
         self.import_sheet_button = Button(self.root, text='Import Spreadsheet', state='normal',
@@ -40,11 +44,14 @@ class PerformanceReviewGUI():
 
         self.excel_sheet_frame = Frame(self.root)
 
+        # self.run_gui()
+
     def run_gui(self):
         '''
         docstr
         '''
         self.init_widgits()
+        self.root.after(1, self.on_open)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.mainloop()
 
@@ -88,12 +95,18 @@ class PerformanceReviewGUI():
         docstr
         '''
         filebrowser_path = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
-        path = os.path.abspath('Performance Review Reports')
 
-        if os.path.isdir(path):
-            subprocess.run([filebrowser_path, path], check=True)
-        elif os.path.isfile(path):
-            subprocess.run([filebrowser_path, '/select,', os.path.normpath(path)], check=True)
+        if os.path.exists(os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')):
+            path = os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')
+        else:
+            path = os.path.abspath('Performance Review Reports')
+        try:
+            if os.path.isdir(path):
+                subprocess.run([filebrowser_path, path], check=True)
+            elif os.path.isfile(path):
+                subprocess.run([filebrowser_path, '/select,', os.path.normpath(path)], check=True)
+        except Exception:
+            pass
 
     def import_spreadsheet_btn_click(self):
         '''
@@ -104,7 +117,7 @@ class PerformanceReviewGUI():
                                                     filetypes=(("all files", "*.*"),))
 
         for filename in filename_list:
-            excel_file(filename)
+            TWExportExcelFile(filename)
 
             filename_spl = filename.split('.')
             new_filename = filename_spl[0] + '.csv'
@@ -165,3 +178,9 @@ class PerformanceReviewGUI():
         '''
         db_clear_database()
         self.root.destroy()
+
+    def on_open(self):
+        '''
+        docstr
+        '''
+        db_clear_database()

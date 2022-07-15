@@ -2,6 +2,7 @@
 docstr
 '''
 import os
+import traceback
 import sqlite3 as sl
 import re
 from datetime import date
@@ -12,13 +13,16 @@ def db_connect():
     '''
     docstr
     '''
-    db_file_name = os.path.abspath('performance-review.db')
+    if os.path.exists(os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')):
+        db_file_name = os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')
+    else:
+        db_file_name = os.path.abspath('performance-review.db')
     db_conn = None
 
     try:
         db_conn = sl.connect(db_file_name)
     except sl.Error as conn_err:
-        print('\n' + conn_err + '\n')
+        print('\n' + str(conn_err) + '\n')
 
     return db_conn
 
@@ -28,61 +32,77 @@ def db_add_performance_entry(performance_prop_list, add_type):
     docstr
     '''
     db_connection = db_connect()
+    try:
+        with db_connection:
+            try:
+                cur = db_connection.cursor()
 
-    with db_connection:
-        try:
-            cur = db_connection.cursor()
+                if add_type == 'team':
 
-            if add_type == 'team':
+                    team_names_str = ''
+                    team_names = performance_prop_list[0]
 
-                team_names_str = ''
-                team_names = performance_prop_list[0]
+                    for name_val in team_names:
+                        if name_val != '':
+                            if team_names.index(name_val) == 0:
+                                name_val = re.sub('[\"\']', '', name_val)
+                                team_names_str = name_val.capitalize()
+                            else:
+                                name_val = re.sub('[\"\']', '', name_val)
+                                team_names_str = team_names_str + '<' + name_val.capitalize()
 
-                for name_val in team_names:
-                    if name_val != '':
-                        if team_names.index(name_val) == 0:
-                            name_val = re.sub('[\"\']', '', name_val)
-                            team_names_str = name_val.capitalize()
-                        else:
-                            name_val = re.sub('[\"\']', '', name_val)
-                            team_names_str = team_names_str + '<' + name_val.capitalize()
+                    performance_prop_list[0] = team_names_str
 
-                performance_prop_list[0] = team_names_str
-
-                team_add_sql_statement = ''' INSERT INTO TeamPerformanceTable
-                                            (TeamNames, JobDate, JobType, TimeWorking,
-                                            TransportRefrence, Filepath)
-                                            VALUES(?,?,?,?,?,?) '''
-
-                cur.execute(team_add_sql_statement, performance_prop_list)
-            else:
-
-                performance_prop_list[0] = performance_prop_list[0].capitalize().strip()
-                if performance_prop_list[0] != '':
-                    check_sql_statement = ''' SELECT WorkerName, TransportRefrence
-                                              FROM IndividualPerformanceTable
-                                              WHERE WorkerName =? AND TransportRefrence =? '''
-                    cur.execute(check_sql_statement, [performance_prop_list[0],
-                                                      performance_prop_list[4]])
+                    team_check_sql_statement = ''' SELECT JobDate, TransportRefrence
+                                                FROM TeamPerformanceTable
+                                                WHERE TeamNames =? AND JobDate =?
+                                                AND JobType =? AND TimeWorking =?
+                                                AND TransportRefrence =?
+                                                AND Filepath =? '''
+                    cur.execute(team_check_sql_statement, performance_prop_list)
                     rows = cur.fetchall()
 
-                    performance_prop_list[0] = re.sub('[\"\']', '', performance_prop_list[0])
-                    performance_prop_list[0] = performance_prop_list[0].capitalize().strip()
-
                     if len(rows) == 0:
-                        individual_add_sql_satatement = ''' INSERT INTO IndividualPerformanceTable
-                                                            (WorkerName, JobDate, JobType,
-                                                            JobTimeWorking, TransportRefrence,
-                                                            WorkerJob, NumJobMembers, FilePath)
-                                                            VALUES (?,?,?,?,?,?,?,?) '''
-                        cur.execute(individual_add_sql_satatement, performance_prop_list)
+                        team_add_sql_statement = ''' INSERT INTO TeamPerformanceTable
+                                                    (TeamNames, JobDate, JobType, TimeWorking,
+                                                    TransportRefrence, Filepath)
+                                                    VALUES(?,?,?,?,?,?) '''
 
-        except Exception:
-            pass
+                        cur.execute(team_add_sql_statement, performance_prop_list)
+                else:
 
-        db_connection.commit()
+                    performance_prop_list[0] = performance_prop_list[0].capitalize().strip()
+                    if performance_prop_list[0] != '':
+                        check_sql_statement = ''' SELECT WorkerName, TransportRefrence, JobDate
+                                                FROM IndividualPerformanceTable
+                                                WHERE WorkerName =? AND TransportRefrence =?
+                                                AND JobDate =? '''
+                        cur.execute(check_sql_statement, [performance_prop_list[0],
+                                                        performance_prop_list[4],
+                                                        performance_prop_list[2]])
+                        rows = cur.fetchall()
 
-    db_connection.close()
+                        performance_prop_list[0] = re.sub('[\"\']', '', performance_prop_list[0])
+                        performance_prop_list[0] = performance_prop_list[0].capitalize().strip()
+
+                        if len(rows) == 0:
+                            individual_add_sql_satatement = ''' INSERT INTO IndividualPerformanceTable
+                                                                (WorkerName, JobDate, JobType,
+                                                                JobTimeWorking, TransportRefrence,
+                                                                WorkerJob, NumJobMembers, FilePath)
+                                                                VALUES (?,?,?,?,?,?,?,?) '''
+                            cur.execute(individual_add_sql_satatement, performance_prop_list)
+
+            except Exception:
+                print(f'\nDB Error: {performance_prop_list}\n')
+                traceback.print_exc()
+                print('\n')
+
+                db_connection.commit()
+
+        db_connection.close()
+    except sl.OperationalError:
+        pass
 
 
 def db_get_individual_data():

@@ -9,6 +9,8 @@ import win32com.client as win32
 import xlsxwriter
 from performance_review_db import db_get_individual_data, db_get_team_data
 win32c = win32.constants
+win32.gencache.is_readonly = False
+win32.gencache.GetGeneratePath()
 # pylint: disable=W0703
 # pylint: disable=R0914
 
@@ -24,7 +26,12 @@ def create_excel_file():
     '''
     docstr
     '''
-    folder_fp = os.path.abspath('Performance Review Reports')
+    folder_fp = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop') 
+    if os.path.exists(os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')):
+        folder_fp = os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')
+    else:
+        folder_fp = os.path.abspath('Performance Review Reports')
+
     f_name = '\\PerformanceReport-' + datetime.now().strftime('%m-%d-%y-%H-%M-%S') + '.xlsx'
 
     created_fp = folder_fp + f_name

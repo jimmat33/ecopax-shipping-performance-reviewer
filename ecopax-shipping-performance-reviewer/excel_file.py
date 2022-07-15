@@ -3,6 +3,9 @@ docstr
 '''
 import datetime
 import re
+import os
+import traceback
+import csv
 from pathlib import Path
 import pandas as pd
 from performance_review_db import db_add_excel_file, db_add_performance_entry
@@ -20,7 +23,9 @@ class TWExportExcelFile():
         self.old_filepath = old_filepath
         self._filepath = self.fix_file_ext()
         self.date_range_list = []
+        self.process_data()
         self.process_file()
+        os.remove(self._filepath)
 
     def fix_file_ext(self):
         '''
@@ -28,11 +33,11 @@ class TWExportExcelFile():
         '''
         base_file = self.old_filepath
         name = base_file.split('.')
-        new_file = f'{name}.csv'
+        new_file = f'{name[0]}.csv'
 
         try:
             with open(base_file, encoding="utf_16") as f_1:
-                with open(new_file, 'w', encoding="utf_16") as f_2:
+                with open(new_file, 'w', encoding="utf_8") as f_2:
                     f_2.write(f_1.read())
         except Exception:
             pass
@@ -69,9 +74,12 @@ class TWExportExcelFile():
         '''
         docstr
         '''
-        data_frame = self.get_data_frame()
-        col_index_lst = self.get_data_frame_cols(data_frame)
-        self.get_values_from_row(data_frame, col_index_lst)
+        try:
+            data_frame = self.get_data_frame()
+            col_index_lst = self.get_data_frame_cols(data_frame)
+            self.get_values_from_row(data_frame, col_index_lst)
+        except Exception:
+            traceback.print_exc()
 
     def get_data_frame(self):
         '''
@@ -85,8 +93,9 @@ class TWExportExcelFile():
         elif file_extension == 'xls':
             data_frame = pd.read_excel(self._filepath)
         elif file_extension == 'csv':
-            data_frame = pd.read_csv(self._filepath, engine='python', sep=',', quotechar='"',
-                                     error_bad_lines=False)
+            data_frame = pd.read_csv(self._filepath, engine='python', sep=',',
+                                     quoting=csv.QUOTE_NONE, quotechar='"',
+                                     on_bad_lines='skip')
         else:
             raise Exception("File not supported")
 
@@ -99,13 +108,19 @@ class TWExportExcelFile():
         column_pd = list(data_frame.columns)
         column_pd = column_pd[0]
         column_list = column_pd.split('\t')
+        formatted_col_list = []
 
-        team_names_column = column_list.index('SL - Remarks')
-        booking_date_column = column_list.index('SL - Date and time of booking')
-        job_type_column = column_list.index('SL - Resource name')
-        transport_refrence_column = column_list.index('SL - Transport reference')
-        job_start_time_column = column_list.index('"SL - Custom timestamp 2 date and time "')
-        job_end_time_column = column_list.index('"SL - Custom timestamp 3 date and time "')
+        for column_name in column_list:
+            col_name = re.sub('[\"\']', '', column_name)
+            col_name.strip()
+            formatted_col_list.append(col_name)
+
+        team_names_column = formatted_col_list.index('SL - Remarks')
+        booking_date_column = formatted_col_list.index('SL - Date and time of booking')
+        job_type_column = formatted_col_list.index('SL - Resource name')
+        transport_refrence_column = formatted_col_list.index('SL - Transport reference')
+        job_start_time_column = formatted_col_list.index('SL - Custom timestamp 2 date and time ')
+        job_end_time_column = formatted_col_list.index('SL - Custom timestamp 3 date and time ')
 
         return [team_names_column, booking_date_column, job_type_column, transport_refrence_column,
                 job_start_time_column, job_end_time_column]
@@ -115,6 +130,7 @@ class TWExportExcelFile():
         docstr
         '''
         data_frame = data_frame.reset_index()
+        total_job_time = 0
 
         for row_set in data_frame.itertuples():
             row_str = row_set[2]
@@ -124,36 +140,45 @@ class TWExportExcelFile():
 
                 booking_date = row[col_index_lst[1]]
                 if len(booking_date) > 10:
-                    booking_date = booking_date[:-9].strip()
+                    booking_date = booking_date.split(' ')[0]
 
                 job_type = row[col_index_lst[2]]
                 job_type = re.sub('[\"\']', '', job_type)
                 job_type = job_type.strip()
 
                 transport_refrence = row[col_index_lst[3]]
+                try:
+                    if row[col_index_lst[4]].find('AM') != -1 or row[col_index_lst[4]].find('PM') != -1:
+                        row[col_index_lst[4]] = row[col_index_lst[4]][:-2].strip()
 
-                job_start_time = row[col_index_lst[4]][-8:-3].strip()
-                job_end_time = row[col_index_lst[5]][-8:-3].strip()
-
-                if len(job_start_time[:-3]) == 1:
-                    job_start_time = '0' + job_start_time
-
-                if len(job_end_time[:-3]) == 1:
-                    job_end_time = '0' + job_end_time
+                    if row[col_index_lst[5]].find('AM') != -1 or row[col_index_lst[5]].find('PM') != -1:
+                        row[col_index_lst[5]] = row[col_index_lst[5]][:-2].strip()
+                except Exception:
+                    pass
 
                 try:
-                    job_start_time = datetime.datetime.strptime(job_start_time, '%H:%M')
-                    job_end_time = datetime.datetime.strptime(job_end_time, '%H:%M')
+                    job_start_time = datetime.datetime.strptime(row[col_index_lst[4]],
+                                                                '%m/%d/%Y %H:%M')
+                    job_end_time = datetime.datetime.strptime(row[col_index_lst[5]],
+                                                              '%m/%d/%Y %H:%M')
+
+                    if ((job_end_time < job_start_time) and
+                            (job_end_time.date() == job_start_time.date())):
+
+                        job_end_time = job_end_time + datetime.timedelta(hours=12)
 
                     total_job_time = job_end_time - job_start_time
                     total_job_time = int(total_job_time.total_seconds() / 60)
                     converted_total_job_time = str(total_job_time)
                 except Exception:
                     converted_total_job_time = 'error'
+                    # traceback.print_exc()
 
             row_vals = [team_names, booking_date, job_type, converted_total_job_time,
                         transport_refrence]
-            self.add_entry_to_db(row_vals)
+
+            if (total_job_time <= 480 and total_job_time >= 1) and converted_total_job_time != 'error':
+                self.add_entry_to_db(row_vals)
 
     def add_entry_to_db(self, row_vals):
         '''
@@ -196,11 +221,13 @@ class TWExportExcelFile():
                 pass
             i += 1
 
-        earliest_date = min(self.date_range_list)
-        latest_date = max(self.date_range_list)
         try:
+            earliest_date = min(self.date_range_list)
+            latest_date = max(self.date_range_list)
+
             fin_date_range_list[0] = datetime.datetime.strftime(earliest_date, '%m/%d/%Y')
             fin_date_range_list[1] = datetime.datetime.strftime(latest_date, '%m/%d/%Y')
         except Exception:
-            pass
+            print(self.date_range_list)
+
         return fin_date_range_list
