@@ -121,9 +121,10 @@ class TWExportExcelFile():
         transport_refrence_column = formatted_col_list.index('SL - Transport reference')
         job_start_time_column = formatted_col_list.index('SL - Custom timestamp 2 date and time ')
         job_end_time_column = formatted_col_list.index('SL - Custom timestamp 3 date and time ')
+        in_or_out_column = formatted_col_list.index('SL - Location')
 
         return [team_names_column, booking_date_column, job_type_column, transport_refrence_column,
-                job_start_time_column, job_end_time_column]
+                job_start_time_column, job_end_time_column, in_or_out_column]
 
     def get_values_from_row(self, data_frame, col_index_lst):
         '''
@@ -148,10 +149,12 @@ class TWExportExcelFile():
 
                 transport_refrence = row[col_index_lst[3]]
                 try:
-                    if row[col_index_lst[4]].find('AM') != -1 or row[col_index_lst[4]].find('PM') != -1:
+                    if (row[col_index_lst[4]].find('AM') != -1
+                       or row[col_index_lst[4]].find('PM') != -1):
                         row[col_index_lst[4]] = row[col_index_lst[4]][:-2].strip()
 
-                    if row[col_index_lst[5]].find('AM') != -1 or row[col_index_lst[5]].find('PM') != -1:
+                    if (row[col_index_lst[5]].find('AM') != -1
+                       or row[col_index_lst[5]].find('PM') != -1):
                         row[col_index_lst[5]] = row[col_index_lst[5]][:-2].strip()
                 except Exception:
                     pass
@@ -174,10 +177,20 @@ class TWExportExcelFile():
                     converted_total_job_time = 'error'
                     # traceback.print_exc()
 
-            row_vals = [team_names, booking_date, job_type, converted_total_job_time,
-                        transport_refrence]
+                in_or_out_val = row[col_index_lst[6]]
+                if in_or_out_val.find('delivery') != -1:
+                    in_or_out = 'Inbound'
+                else:
+                    in_or_out = 'Outbound'
 
-            if (total_job_time <= 480 and total_job_time >= 1) and converted_total_job_time != 'error':
+            if len(team_names) > 1 and job_type.find('20') != -1:
+                job_type = 'Ocean Containers - 40 HQ'
+
+            row_vals = [team_names, booking_date, job_type, converted_total_job_time,
+                        transport_refrence, in_or_out]
+
+            if ((total_job_time <= 480 and total_job_time >= 1)
+               and converted_total_job_time != 'error'):
                 self.add_entry_to_db(row_vals)
 
     def add_entry_to_db(self, row_vals):
@@ -189,10 +202,11 @@ class TWExportExcelFile():
         job_type = row_vals[2]
         converted_total_job_time = row_vals[3]
         transport_refrence = row_vals[4]
+        in_or_out = row_vals[5]
 
         if isinstance(team_names, list) and len(team_names) != 0:
             db_add_performance_entry([team_names, booking_date, job_type, converted_total_job_time,
-                                      transport_refrence, self._filepath], 'team')
+                                      transport_refrence, self._filepath, in_or_out], 'team')
 
             for person_name in team_names:
                 if team_names.index(person_name) == 0:
@@ -202,7 +216,7 @@ class TWExportExcelFile():
 
                 db_add_performance_entry([person_name.strip(), booking_date, job_type,
                                           converted_total_job_time, transport_refrence,
-                                          worker_job, len(team_names), self._filepath],
+                                          worker_job, len(team_names), self._filepath, in_or_out],
                                          'individual')
                 self.date_range_list.append(booking_date)
 

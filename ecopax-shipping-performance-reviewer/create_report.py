@@ -26,9 +26,11 @@ def create_excel_file():
     '''
     docstr
     '''
-    folder_fp = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop') 
-    if os.path.exists(os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')):
-        folder_fp = os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')
+    folder_fp = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    if os.path.exists(os.path.abspath
+                      ('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')):
+        folder_fp = os.path.abspath(
+            'Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')
     else:
         folder_fp = os.path.abspath('Performance Review Reports')
 
@@ -65,17 +67,19 @@ def populate_worksheet(data_lst, sheet_obj, wrk_book):
         sheet_obj.write('A1', 'Worker Name')
         sheet_obj.write('B1', 'Job Date')
         sheet_obj.write('C1', 'Job Type')
-        sheet_obj.write('D1', 'Total Job Time')
-        sheet_obj.write('E1', 'Worker Job')
-        sheet_obj.write('F1', 'Minutes Per Day')
-        sheet_obj.write('G1', 'Month')
+        sheet_obj.write('D1', 'Inbound or Outbound')
+        sheet_obj.write('E1', 'Total Job Time')
+        sheet_obj.write('F1', 'Worker Job')
+        sheet_obj.write('G1', 'Minutes Per Day')
+        sheet_obj.write('H1', 'Month')
 
     elif sheet_obj.name == 'Team Data Master':
         sheet_obj.write('A1', 'Team Names')
         sheet_obj.write('B1', 'Job Date')
         sheet_obj.write('C1', 'Job Type')
-        sheet_obj.write('D1', 'Total Job Time')
-        sheet_obj.write('E1', 'Month')
+        sheet_obj.write('D1', 'Inbound or Outbound')
+        sheet_obj.write('E1', 'Total Job Time')
+        sheet_obj.write('F1', 'Month')
 
     i = 0
 
@@ -93,9 +97,9 @@ def populate_worksheet(data_lst, sheet_obj, wrk_book):
         i += 1
 
     if sheet_obj.name == 'Individual Data Master':
-        sheet_obj.autofilter(f'A1:G{i + 1}')
+        sheet_obj.autofilter(f'A1:H{i + 1}')
     elif sheet_obj.name == 'Team Data Master':
-        sheet_obj.autofilter(f'A1:E{i + 1}')
+        sheet_obj.autofilter(f'A1:F{i + 1}')
 
 
 def run_excel(str_path):
@@ -151,7 +155,7 @@ def ind_loading_time_trend_pivot(wrk_book, data_sheet, pivot_sheet):
     table_name = 'Individual Loading Time Trend'
     table_rows = ['Worker Name', 'Month', 'Job Date']
     table_cols = []
-    table_filters = ['Job Type']
+    table_filters = ['Job Type', 'Inbound or Outbound']
     table_calcs = [['Total Job Time', 'Total Job Time Sum', win32c.xlSum, '##0'],
                    ['Total Job Time', 'Total Job Time Avg', win32c.xlAverage, '##0.00'],
                    ['Total Job Time', 'Number of Jobs Done', win32c.xlCount, '##0']]
@@ -199,7 +203,7 @@ def team_loading_time_trend_pivot(wrk_book, data_sheet, pivot_sheet):
     table_name = 'Team Loading Time Trend'
     table_rows = ['Team Names', 'Month', 'Job Date']
     table_cols = []
-    table_filters = ['Job Type']
+    table_filters = ['Job Type', 'Inbound or Outbound']
     table_calcs = [['Total Job Time', 'Total Job Time Sum', win32c.xlSum, '##0'],
                    ['Total Job Time', 'Total Job Time Avg', win32c.xlAverage, '##0.00'],
                    ['Total Job Time', 'Number of Jobs Done', win32c.xlCount, '##0']]
@@ -247,7 +251,7 @@ def loading_vs_nonloading_pivot(wrk_book, data_sheet, pivot_sheet):
     table_name = 'Individual Loading Vs. Non-Loading Time'
     table_rows = ['Worker Name', 'Month', 'Job Date']
     table_cols = []
-    table_filters = ['Job Type', 'Worker Job']
+    table_filters = ['Job Type', 'Worker Job', 'Inbound or Outbound']
     table_calcs = [['Total Job Time', 'Job Time Sum', win32c.xlSum, '##0'],
                    ['Minutes Per Day', 'Num Minutes Per Day', win32c.xlMin, '##0']]
 

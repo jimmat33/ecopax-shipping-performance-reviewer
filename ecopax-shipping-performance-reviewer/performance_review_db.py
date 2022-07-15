@@ -13,8 +13,10 @@ def db_connect():
     '''
     docstr
     '''
-    if os.path.exists(os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')):
-        db_file_name = os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')
+    if os.path.exists(os.path.abspath
+                      ('Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')):
+        db_file_name = os.path.abspath(
+            'Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')
     else:
         db_file_name = os.path.abspath('performance-review.db')
     db_conn = None
@@ -58,15 +60,15 @@ def db_add_performance_entry(performance_prop_list, add_type):
                                                 WHERE TeamNames =? AND JobDate =?
                                                 AND JobType =? AND TimeWorking =?
                                                 AND TransportRefrence =?
-                                                AND Filepath =? '''
+                                                AND Filepath =? AND InOrOut=?'''
                     cur.execute(team_check_sql_statement, performance_prop_list)
                     rows = cur.fetchall()
 
                     if len(rows) == 0:
                         team_add_sql_statement = ''' INSERT INTO TeamPerformanceTable
                                                     (TeamNames, JobDate, JobType, TimeWorking,
-                                                    TransportRefrence, Filepath)
-                                                    VALUES(?,?,?,?,?,?) '''
+                                                    TransportRefrence, Filepath, InOrOut)
+                                                    VALUES(?,?,?,?,?,?,?) '''
 
                         cur.execute(team_add_sql_statement, performance_prop_list)
                 else:
@@ -78,19 +80,21 @@ def db_add_performance_entry(performance_prop_list, add_type):
                                                 WHERE WorkerName =? AND TransportRefrence =?
                                                 AND JobDate =? '''
                         cur.execute(check_sql_statement, [performance_prop_list[0],
-                                                        performance_prop_list[4],
-                                                        performance_prop_list[2]])
+                                                          performance_prop_list[4],
+                                                          performance_prop_list[2]])
                         rows = cur.fetchall()
 
                         performance_prop_list[0] = re.sub('[\"\']', '', performance_prop_list[0])
                         performance_prop_list[0] = performance_prop_list[0].capitalize().strip()
 
                         if len(rows) == 0:
-                            individual_add_sql_satatement = ''' INSERT INTO IndividualPerformanceTable
+                            individual_add_sql_satatement = ''' INSERT INTO
+                                                                IndividualPerformanceTable
                                                                 (WorkerName, JobDate, JobType,
                                                                 JobTimeWorking, TransportRefrence,
-                                                                WorkerJob, NumJobMembers, FilePath)
-                                                                VALUES (?,?,?,?,?,?,?,?) '''
+                                                                WorkerJob, NumJobMembers, FilePath,
+                                                                InOrOut)
+                                                                VALUES (?,?,?,?,?,?,?,?,?) '''
                             cur.execute(individual_add_sql_satatement, performance_prop_list)
 
             except Exception:
@@ -116,7 +120,7 @@ def db_get_individual_data():
     with db_connection:
         cur = db_connection.cursor()
 
-        get_sql_statement = ''' SELECT WorkerName, JobDate, JobType, JobTimeWorking,
+        get_sql_statement = ''' SELECT WorkerName, JobDate, JobType, InOrOut, JobTimeWorking,
                                 WorkerJob
                                 FROM IndividualPerformanceTable '''
 
@@ -156,7 +160,7 @@ def db_get_team_data():
     with db_connection:
         cur = db_connection.cursor()
 
-        get_sql_statement = ''' SELECT TeamNames, JobDate, JobType, TimeWorking
+        get_sql_statement = ''' SELECT TeamNames, JobDate, JobType, InOrOut, TimeWorking
                                 FROM TeamPerformanceTable '''
 
         cur.execute(get_sql_statement)

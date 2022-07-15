@@ -17,6 +17,7 @@ class PerformanceReviewGUI():
     docstr
     '''
     # pylint: disable=R0902
+    # pylint: disable=W0703
     def __init__(self):
         self.root = tk.Tk()
         self.root.geometry('800x400')
@@ -26,7 +27,8 @@ class PerformanceReviewGUI():
             img = tk.PhotoImage(file=(os.path.abspath('gui_icon.png')))
             self.root.tk.call('wm', 'iconphoto', self.root._w, img)
         except Exception:
-            img = tk.PhotoImage(file=(os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\gui_icon.png')))
+            img = tk.PhotoImage(file=(os.path.abspath
+                                      ('Ecopax-Performance-Reviwer-Program-Files\\gui_icon.png')))
             self.root.tk.call('wm', 'iconphoto', self.root._w, img)
         self.excel_index = 1
 
@@ -96,8 +98,10 @@ class PerformanceReviewGUI():
         '''
         filebrowser_path = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
 
-        if os.path.exists(os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')):
-            path = os.path.abspath('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')
+        if os.path.exists(os.path.abspath
+                          ('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')):
+            path = os.path.abspath(
+                'Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')
         else:
             path = os.path.abspath('Performance Review Reports')
         try:
