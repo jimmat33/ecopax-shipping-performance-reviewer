@@ -177,11 +177,14 @@ class TWExportExcelFile():
                     converted_total_job_time = 'error'
                     # traceback.print_exc()
 
-                in_or_out_val = row[col_index_lst[6]]
-                if in_or_out_val.find('delivery') != -1:
-                    in_or_out = 'Inbound'
-                else:
-                    in_or_out = 'Outbound'
+                try:
+                    in_or_out_val = row[col_index_lst[6]]
+                    if in_or_out_val.find('delivery') != -1:
+                        in_or_out = 'Inbound'
+                    else:
+                        in_or_out = 'Outbound'
+                except Exception:
+                    pass
 
             if len(team_names) > 1 and job_type.find('20') != -1:
                 job_type = 'Ocean Containers - 40 HQ'
