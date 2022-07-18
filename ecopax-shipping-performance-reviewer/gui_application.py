@@ -10,6 +10,7 @@ from create_report import create_report
 from performance_review_db import (db_get_excel_file, db_get_all_excel_filepaths,
                                    db_remove_excel_file, db_clear_database)
 from excel_file import TWExportExcelFile
+from report_card import create_report_cards
 
 
 class PerformanceReviewGUI():
@@ -44,6 +45,9 @@ class PerformanceReviewGUI():
         self.generate_report_button = Button(self.root, text='Generate Report', state='normal',
                                              command=self.generate_report)
 
+        self.report_card_button = Button(self.root, text='Create Report Cards', state='normal',
+                                         command=self.create_report_cards_btn_click)
+
         self.excel_sheet_frame = Frame(self.root)
 
         # self.run_gui()
@@ -64,8 +68,9 @@ class PerformanceReviewGUI():
         self.import_sheet_button.place(x=25, y=35, width=220, height=55)
         self.remove_sheet_button.place(x=25, y=105, width=220, height=55)
         self.excel_sheet_frame.place(x=300, y=35, width=485, height=240)
-        self.goto_report_loc_button.place(x=585, y=280, width=185, height=40)
-        self.generate_report_button.place(x=385, y=280, width=185, height=40)
+        self.goto_report_loc_button.place(x=25, y=245, width=220, height=55)
+        self.generate_report_button.place(x=25, y=175, width=220, height=55)
+        self.report_card_button.place(x=25, y=315, width=220, height=55)
 
         excel_vertical_scroll = Scrollbar(self.excel_sheet_frame)
         excel_vertical_scroll.pack(side=tk.RIGHT, fill=tk.Y)
@@ -169,6 +174,9 @@ class PerformanceReviewGUI():
 
         except Exception:
             pass
+
+    def create_report_cards_btn_click(self):
+        create_report_cards()
 
     def generate_report(self):
         '''
