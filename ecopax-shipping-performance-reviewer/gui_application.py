@@ -176,6 +176,9 @@ class PerformanceReviewGUI():
             pass
 
     def create_report_cards_btn_click(self):
+        '''
+        docstr
+        '''
         create_report_cards()
 
     def generate_report(self):
