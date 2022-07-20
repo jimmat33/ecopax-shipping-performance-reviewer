@@ -5,11 +5,14 @@ import datetime as dt
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 import os
+import re
 from pathlib import Path
 import numpy as np
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.platypus import Image
 from PyPDF2 import PdfFileWriter, PdfFileReader, PdfFileMerger
+from reportlab.lib.units import inch
 import io
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -21,7 +24,12 @@ def create_report_cards():
     '''
     docstr
     '''
-    test_report_card()
+    page_data_full = get_report_data()
+    page_data = page_data_full[0]
+
+    create_report_pages(page_data)
+
+
     '''
     pdf_filepaths.clear()
     data_lst = get_report_data()
@@ -68,13 +76,25 @@ def get_report_data():
                  'Year-Data': [
                         {'Job-Type': '40\' Ocean Container', 'Month': 'Jan', 'Avg-Time': '150'},
                         {'Job-Type': '40\' Ocean Container', 'Month': 'Feb', 'Avg-Time': '147'},
-                        {'Job-Type': '40\' Ocean Container', 'Month': 'Feb', 'Avg-Time': '130'},
+                        {'Job-Type': '40\' Ocean Container', 'Month': 'Mar', 'Avg-Time': '130'},
+                        {'Job-Type': '40\' Ocean Container', 'Month': 'Apr', 'Avg-Time': '150'},
+                        {'Job-Type': '40\' Ocean Container', 'Month': 'May', 'Avg-Time': '140'},
+                        {'Job-Type': '40\' Ocean Container', 'Month': 'Jun', 'Avg-Time': '145'},
+                        {'Job-Type': '40\' Ocean Container', 'Month': 'Jul', 'Avg-Time': '120'},
                         {'Job-Type': '20\' Ocean Container', 'Month': 'Jan', 'Avg-Time': '70'},
-                        {'Job-Type': '20\' Ocean Container', 'Month': 'Jan', 'Avg-Time': '60'},
-                        {'Job-Type': '20\' Ocean Container', 'Month': 'Jan', 'Avg-Time': '65'},
+                        {'Job-Type': '20\' Ocean Container', 'Month': 'Feb', 'Avg-Time': '60'},
+                        {'Job-Type': '20\' Ocean Container', 'Month': 'Mar', 'Avg-Time': '65'},
+                        {'Job-Type': '20\' Ocean Container', 'Month': 'Apr', 'Avg-Time': '78'},
+                        {'Job-Type': '20\' Ocean Container', 'Month': 'May', 'Avg-Time': '60'},
+                        {'Job-Type': '20\' Ocean Container', 'Month': 'Jun', 'Avg-Time': '55'},
+                        {'Job-Type': '20\' Ocean Container', 'Month': 'Jul', 'Avg-Time': '40'},
                         {'Job-Type': 'Pallet Load', 'Month': 'Jan', 'Avg-Time': '50'},
-                        {'Job-Type': 'Pallet Load', 'Month': 'Jan', 'Avg-Time': '44'},
-                        {'Job-Type': 'Pallet Load', 'Month': 'Jan', 'Avg-Time': '42'}]}]
+                        {'Job-Type': 'Pallet Load', 'Month': 'Feb', 'Avg-Time': '44'},
+                        {'Job-Type': 'Pallet Load', 'Month': 'Mar', 'Avg-Time': '42'},
+                        {'Job-Type': 'Pallet Load', 'Month': 'Apr', 'Avg-Time': '61'},
+                        {'Job-Type': 'Pallet Load', 'Month': 'May', 'Avg-Time': '47'},
+                        {'Job-Type': 'Pallet Load', 'Month': 'Jun', 'Avg-Time': '38'},
+                        {'Job-Type': 'Pallet Load', 'Month': 'Jul', 'Avg-Time': '30'}]}]
 
     return data_lst
 
@@ -84,8 +104,8 @@ def create_report_pages(page_data):
     docstr
     '''
     if page_data['Name'] != 'Company':
-        front_canvas = create_front_page(page_data)
-        full_report = merge_single_report(front_canvas)
+        front_canvas = test_report_card(page_data)
+        full_report = merge_single_report(front_canvas, page_data)
 
         pdf_filepaths.append(full_report)
     else:
@@ -130,14 +150,23 @@ def create_company_report():
     return output_fp
 
 
-def merge_single_report(front_canvas):
+def merge_single_report(front_canvas, page_data):
     '''
     return filepath
     '''
     back_page = get_back_page()
 
     pdf_merger = PdfFileMerger()
-    output_fp = ''
+    if os.path.exists(os.path.abspath
+                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
+        f_path = os.path.abspath(
+            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')
+    else:
+        f_path = os.path.abspath('Report Card Cache')
+
+    f_name = page_data['Name'] + '-fullreport.pdf'
+
+    output_fp = f_path + '\\' + f_name
 
     pdf_merger.append(front_canvas)
     pdf_merger.append(back_page)
@@ -154,15 +183,10 @@ def create_final_report():
     output_fp = ''
     return output_fp
 
-def test_report_card():
+def test_report_card(page_data):
     '''
     docstr
     '''
-    page_data_full = get_report_data()
-    page_data = page_data_full[0]
-
-    current_timestamp = dt.datetime.now()
-
     if os.path.exists(os.path.abspath
                       ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
         f_path = os.path.abspath(
@@ -206,6 +230,7 @@ def test_report_card():
         month_start_pixel_y -= 20
 
     graph_fp = create_graph(page_data)
+    report_canvas.drawImage(graph_fp, 0.55 * inch, 0.4 * inch)
 
     # make modifications here
     report_canvas.save()
@@ -232,6 +257,9 @@ def test_report_card():
     output.write(output_stream)
     output_stream.close()
 
+    return output_fp
+
+
 def create_graph(page_data):
     '''
     return fp
@@ -243,18 +271,22 @@ def create_graph(page_data):
     else:
         f_path = os.path.abspath('Report Card Cache')
 
-    output_fp = f_path + '\\' + page_data['Name'] + '-graph'
+    output_fp = f_path + '\\' + page_data['Name'] + '-graph.png'
 
     graph_data = page_data['Year-Data']
     formatted_data = format_graph_data(graph_data)
 
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    acceptable_formats = ['-', '--', ':', '^', '*']
+    acceptable_formats = ['-', '-.', ':', '--', '-', '-.', ':', '--']
+    acceptable_markers = ['o', 'v', 's', '*', '+', 'o', 'v', 's', '*', '+']
 
+    plt.figure(figsize=(5.75, 2))
     for dataset in formatted_data:
-        plt.plot(months, dataset[1:], acceptable_formats[dataset.index(dataset)], label=dataset[0])
+        type_name = re.sub('[\"]', '', dataset[0])
+        dataset_vals = dataset[1:]
+        plt.plot(np.array(months[:len(dataset_vals)]), np.array(dataset_vals), acceptable_formats[formatted_data.index(dataset)], label=type_name, marker=acceptable_markers[formatted_data.index(dataset)], color='black')
 
-    plt.legend()
+    plt.legend(prop={'size': 7})
     plt.savefig(output_fp)
 
     return output_fp
@@ -265,7 +297,7 @@ def format_graph_data(graph_data):
     docstr
     '''
     job_types = set()
-    job_types = {job_types.add(entry['Job-Type']) for entry in graph_data}
+    lst_cmp = {job_types.add(entry['Job-Type']) for entry in graph_data}
     num_job_type = len(job_types)
 
     data_lst = []
@@ -276,7 +308,7 @@ def format_graph_data(graph_data):
         inner_lst.append(current_job_type)
         for item in graph_data:
             if item['Job-Type'] == current_job_type:
-                inner_lst.append(int(item['Average']))
+                inner_lst.append(int(item['Avg-Time']))
         data_lst.append(inner_lst)
 
     return data_lst
