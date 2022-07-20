@@ -2,6 +2,7 @@
 docstr
 '''
 import datetime as dt
+from datetime import date, timedelta
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 import os
@@ -16,6 +17,8 @@ from reportlab.lib.units import inch
 import io
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+
+from performance_review_db import db_get_individual_data, db_get_team_data
 
 pdf_filepaths = []
 
@@ -55,17 +58,79 @@ def create_report_cards():
     return final_report_fp
     '''
 
+
+def allsundays(year):
+    """This code was provided in the previous answer! It's not mine!"""
+    d = date(year, 1, 1)                    # January 1st                                                          
+    d += timedelta(days=6 - d.weekday())  # First Sunday                                                         
+    while d.year == year:
+        yield d
+        d += timedelta(days=7)
+
+
+def get_week_dates(year):
+    '''
+    docstr
+    '''
+    Dict = {}
+    for wn,d in enumerate(allsundays(year)):
+        # This is my only contribution!
+        Dict[wn+1] = [(d + timedelta(days=k)).isoformat() for k in range(0,7) ]
+
+    return Dict
+
+
 def get_report_data():
     '''
     docstr
     '''
+    all_team_data = db_get_team_data()
+    all_individual_data = db_get_individual_data()
+
+    current_date = dt.date.today()
+
+    week_start = current_date - timedelta(days=30)
+    month_start = current_date - timedelta(days=30)
+    year_start = current_date - timedelta(days=365)
+
+    current_date_str = current_date.strftime('%m/%d/%y')
+    week_start_str = week_start.strftime('%m/%d/%y')
+    month_start_str = month_start.strftime('%m/%d/%y')
+    year_start_str = year_start.strftime('%m/%d/%y')
+
+    names_set = set()
+    {names_set.add([entry[0], entry[5]]) for entry in all_individual_data}
+
+    for name_entry in names_set:
+        data_lst_entry = {'Name': '', 'Job': '', 'Date': '',
+                          'Week-Date-Range': '', 'Week-Data': [],
+                          'Month-Date-Range': '', 'Month-Data': [],
+                          'Year-Date-Range': '', 'Year-Data': []}
+
+        data_lst_entry['Name'] = name_entry[0]
+        data_lst_entry['Job'] = name_entry[1]
+        data_lst_entry['Date'] = dt.date.today()
+
+        data_lst_entry['Week-Date-Range'] = week_start_str + '-' + current_date_str
+        data_lst_entry['Month-Date-Range'] = month_start_str + '-' + current_date_str
+        data_lst_entry['Year-Date-Range'] = year_start_str + '-' + current_date_str
+
+        week_data_lst = format_week_data(all_individual_data, name_entry[0], week_start)
+        month_data_lst = format_month_data(all_individual_data, name_entry[0], month_start)
+        team_data_lst = format_team_data(all_team_data, name_entry[0], month_start)
+        year_data_lst = format_year_data(all_individual_data, name_entry[0], year_start)
+
+        
+
     data_lst = [{'Name': 'Jimmy Mattison',
                  'Job': 'Driver',
                  'Date': '7/18/2022',
+                 'Week-Date-Range': '12/17/22-12/23/22',
                  'Week-Data': [
                         {'Job-Type': '40\' Ocean Container', 'Average': '90', 'Num-Jobs': '4', 'Rank': '1'},
                         {'Job-Type': '20\' Ocean Container', 'Average': '60', 'Num-Jobs': '2', 'Rank': '4'},
                         {'Job-Type': 'Pallet Load', 'Average': '40', 'Num-Jobs': '12', 'Rank': '1'}],
+                 'Month-Date-Range': '13/10/22-13/20/22',
                  'Month-Data': [
                         {'Job-Type': '40\' Ocean Container', 'Average': '90', 'Num-Jobs': '4', 'Rank': '1'},
                         {'Job-Type': '20\' Ocean Container', 'Average': '60', 'Num-Jobs': '2', 'Rank': '4'},
@@ -73,6 +138,7 @@ def get_report_data():
                  'Team-Data': [
                         {'Team-Names': 'Jimmy, James, Dean', 'Average': '90', 'Num-Jobs': '4'},
                         {'Team-Names': 'Jimmy, Mike, Melanie', 'Average': '80', 'Num-Jobs': '2'}],
+                 'Year-Date-Range': '13/10/22-13/20/22',
                  'Year-Data': [
                         {'Job-Type': '40\' Ocean Container', 'Month': 'Jan', 'Avg-Time': '150'},
                         {'Job-Type': '40\' Ocean Container', 'Month': 'Feb', 'Avg-Time': '147'},
@@ -99,12 +165,40 @@ def get_report_data():
     return data_lst
 
 
+def format_week_data(all_individual_data, name_entry, week_start):
+    '''
+    docstr
+    '''
+    return []
+
+
+def format_month_data(all_individual_data, name_entry, month_start):
+    '''
+    docstr
+    '''
+    return []
+
+
+def format_team_data(all_team_data, name_entry, month_start):
+    '''
+    pass
+    '''
+    return []
+
+
+def format_year_data(all_individual_data, name_entry, year_start):
+    '''
+    docstr
+    '''
+    return []
+
+
 def create_report_pages(page_data):
     '''
     docstr
     '''
     if page_data['Name'] != 'Company':
-        front_canvas = test_report_card(page_data)
+        front_canvas = create_front_page(page_data)
         full_report = merge_single_report(front_canvas, page_data)
 
         pdf_filepaths.append(full_report)
@@ -117,16 +211,83 @@ def create_front_page(page_data):
     '''
     docstr
     '''
-    current_timestamp = dt.datetime.now()
-    f_path = ''
-    canvas_name = page_data['Name'] + '-report-front'
-    canvas_path = f_path + '\\' + canvas_name
-    report_canvas = canvas.Canvas(canvas_path, pagesize=letter)
+    if os.path.exists(os.path.abspath
+                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
+        f_path = os.path.abspath(
+            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')
+    else:
+        f_path = os.path.abspath('Report Card Cache')
 
+    packet = io.BytesIO()
+    output_fp = f_path + '\\' + page_data['Name'] + '-front.pdf'
+    report_canvas = canvas.Canvas(packet, pagesize=letter)
 
+    pdfmetrics.registerFont(TTFont('Calibri', 'Calibri.ttf'))
 
+    report_canvas.setFont('Calibri', 12)
+    report_canvas.drawString(95, 697, page_data['Name'])
+    report_canvas.drawString(77, 674.5, page_data['Job'])
+    report_canvas.drawString(87, 657.5, page_data['Date'])
 
-    return f_path
+    report_canvas.setFont('Calibri', 15)
+    report_canvas.drawString(135, 623, page_data['Week-Date-Range'])
+    report_canvas.drawString(140, 489, page_data['Month-Date-Range'])
+    report_canvas.drawString(127, 232, page_data['Year-Date-Range'])
+
+    report_canvas.setFont('Calibri', 12)
+    week_start_pixel_y = 582
+
+    for week_data in page_data['Week-Data']:
+        report_canvas.drawString(54, week_start_pixel_y, week_data['Job-Type'])
+        report_canvas.drawString(287, week_start_pixel_y, week_data['Average'])
+        report_canvas.drawString(422, week_start_pixel_y, week_data['Num-Jobs'])
+        report_canvas.drawString(494, week_start_pixel_y, week_data['Rank'])
+        week_start_pixel_y -= 30
+
+    month_start_pixel_y = 447
+
+    for month_data in page_data['Month-Data']:
+        report_canvas.drawString(54, month_start_pixel_y, month_data['Job-Type'])
+        report_canvas.drawString(287, month_start_pixel_y, month_data['Average'])
+        report_canvas.drawString(422, month_start_pixel_y, month_data['Num-Jobs'])
+        report_canvas.drawString(494, month_start_pixel_y, month_data['Rank'])
+        month_start_pixel_y -= 30
+
+    for team_data in page_data['Team-Data']:
+        report_canvas.drawString(54, month_start_pixel_y, team_data['Team-Names'])
+        report_canvas.drawString(287, month_start_pixel_y, team_data['Average'])
+        report_canvas.drawString(422, month_start_pixel_y, team_data['Num-Jobs'])
+        month_start_pixel_y -= 20
+
+    graph_fp = create_graph(page_data)
+    report_canvas.drawImage(graph_fp, 0.55 * inch, 0.4 * inch)
+
+    # make modifications here
+    report_canvas.save()
+    packet.seek(0)
+
+    if os.path.exists(os.path.abspath
+                      ('Ecopax-Performance-Reviwer-Program-Files\\program-dependables\\(PDF)Transwide Report Card PDF.pdf')):
+        template_pdf_fp = os.path.abspath(
+            'Ecopax-Performance-Reviwer-Program-Files\\program-dependables\\(PDF)Transwide Report Card PDF.pdf')
+    else:
+        template_pdf_fp = os.path.abspath('program-dependables\\(PDF)Transwide Report Card PDF.pdf')
+
+    new_pdf = PdfFileReader(packet)
+    exisiting_pdf = PdfFileReader(open(template_pdf_fp, 'rb'))
+
+    output = PdfFileWriter()
+
+    template_page = exisiting_pdf.getPage(0)
+    template_page.mergePage(new_pdf.getPage(0))
+
+    output.addPage(template_page)
+
+    output_stream = open(output_fp, 'wb')
+    output.write(output_stream)
+    output_stream.close()
+
+    return output_fp
 
 
 def get_back_page():
@@ -181,82 +342,6 @@ def create_final_report():
     return filepath
     '''
     output_fp = ''
-    return output_fp
-
-def test_report_card(page_data):
-    '''
-    docstr
-    '''
-    if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
-        f_path = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')
-    else:
-        f_path = os.path.abspath('Report Card Cache')
-
-    packet = io.BytesIO()
-    output_fp = f_path + '\\' + page_data['Name'] + '-front.pdf'
-    report_canvas = canvas.Canvas(packet, pagesize=letter)
-
-    pdfmetrics.registerFont(TTFont('Calibri', 'Calibri.ttf'))
-
-    report_canvas.setFont('Calibri', 12)
-    report_canvas.drawString(95, 697, page_data['Name'])
-    report_canvas.drawString(77, 674.5, page_data['Job'])
-    report_canvas.drawString(87, 657.5, page_data['Date'])
-
-    week_start_pixel_y = 582
-
-    for week_data in page_data['Week-Data']:
-        report_canvas.drawString(54, week_start_pixel_y, week_data['Job-Type'])
-        report_canvas.drawString(287, week_start_pixel_y, week_data['Average'])
-        report_canvas.drawString(422, week_start_pixel_y, week_data['Num-Jobs'])
-        report_canvas.drawString(494, week_start_pixel_y, week_data['Rank'])
-        week_start_pixel_y -= 30
-
-    month_start_pixel_y = 447
-
-    for month_data in page_data['Month-Data']:
-        report_canvas.drawString(54, month_start_pixel_y, month_data['Job-Type'])
-        report_canvas.drawString(287, month_start_pixel_y, month_data['Average'])
-        report_canvas.drawString(422, month_start_pixel_y, month_data['Num-Jobs'])
-        report_canvas.drawString(494, month_start_pixel_y, month_data['Rank'])
-        month_start_pixel_y -= 30
-
-    for team_data in page_data['Team-Data']:
-        report_canvas.drawString(54, month_start_pixel_y, team_data['Team-Names'])
-        report_canvas.drawString(287, month_start_pixel_y, team_data['Average'])
-        report_canvas.drawString(422, month_start_pixel_y, team_data['Num-Jobs'])
-        month_start_pixel_y -= 20
-
-    graph_fp = create_graph(page_data)
-    report_canvas.drawImage(graph_fp, 0.55 * inch, 0.4 * inch)
-
-    # make modifications here
-    report_canvas.save()
-    packet.seek(0)
-
-    if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\program-dependables\\(PDF)Transwide Report Card PDF.pdf')):
-        template_pdf_fp = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\program-dependables\\(PDF)Transwide Report Card PDF.pdf')
-    else:
-        template_pdf_fp = os.path.abspath('program-dependables\\(PDF)Transwide Report Card PDF.pdf')
-
-    new_pdf = PdfFileReader(packet)
-    exisiting_pdf = PdfFileReader(open(template_pdf_fp, 'rb'))
-
-    output = PdfFileWriter()
-
-    template_page = exisiting_pdf.getPage(0)
-    template_page.mergePage(new_pdf.getPage(0))
-
-    output.addPage(template_page)
-
-    output_stream = open(output_fp, 'wb')
-    output.write(output_stream)
-    output_stream.close()
-
     return output_fp
 
 
