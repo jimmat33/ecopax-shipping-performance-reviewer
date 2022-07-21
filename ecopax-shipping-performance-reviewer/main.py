@@ -10,5 +10,6 @@ from gui_application import PerformanceReviewGUI
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
-    gui_obj = PerformanceReviewGUI()
+    manager = multiprocessing.Manager()
+    gui_obj = PerformanceReviewGUI(manager)
     gui_obj.run_gui()

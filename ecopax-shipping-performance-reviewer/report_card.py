@@ -18,22 +18,20 @@ from reportlab.lib.units import inch
 import io
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
 from performance_review_db import db_get_individual_data, db_get_team_data
 
-pdf_filepaths = []
 
-
-def create_report_cards():
+def create_report_cards(manager):
     '''
     docstr
     '''
-    pdf_filepaths.clear()
+    pdf_filepaths = manager.list()
+
     data_lst = get_report_data()
     process_lst = []
 
     for data_entry in data_lst:
-        pdf_proc = mp.Process(target=create_report_pages, args=(data_entry,))
+        pdf_proc = mp.Process(target=create_report_pages, args=(data_entry, pdf_filepaths,))
         process_lst.append(pdf_proc)
 
     num_cores = mp.cpu_count()
@@ -48,7 +46,7 @@ def create_report_cards():
         for pdf_process in lst:
             pdf_process.join()
 
-    final_report_fp = create_final_report()
+    final_report_fp = create_final_report(pdf_filepaths)
     return final_report_fp
 
 
@@ -83,7 +81,7 @@ def get_report_data():
 
     current_date = dt.date.today()
 
-    week_start = current_date - timedelta(days=30)
+    week_start = current_date - timedelta(days=7)
     month_start = current_date - timedelta(days=30)
     year_start = current_date - timedelta(days=365)
 
@@ -295,7 +293,7 @@ def format_year_data(all_individual_data, name_entry, year_start):
     return ret_lst
 
 
-def create_report_pages(page_data):
+def create_report_pages(page_data, pdf_filepaths):
     '''
     docstr
     '''
@@ -405,7 +403,7 @@ def get_back_page():
     return output_fp
 
 
-def create_final_report():
+def create_final_report(pdf_filepaths):
     '''
     return fulepath
     '''

@@ -19,11 +19,12 @@ class PerformanceReviewGUI():
     '''
     # pylint: disable=R0902
     # pylint: disable=W0703
-    def __init__(self):
+    def __init__(self, manager):
         self.root = tk.Tk()
         self.root.geometry('800x400')
         self.root.title("Shipping Performance Reviewer")
         self.root.resizable(False, False)
+        self.manager = manager
         try:
             img = tk.PhotoImage(file=(os.path.abspath('gui_icon.png')))
             self.root.tk.call('wm', 'iconphoto', self.root._w, img)
@@ -179,7 +180,7 @@ class PerformanceReviewGUI():
         '''
         docstr
         '''
-        create_report_cards()
+        create_report_cards(self.manager)
 
     def generate_report(self):
         '''
