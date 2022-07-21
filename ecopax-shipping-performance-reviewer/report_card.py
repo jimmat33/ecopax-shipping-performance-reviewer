@@ -28,13 +28,6 @@ def create_report_cards():
     '''
     docstr
     '''
-    page_data_full = get_report_data()
-    page_data = page_data_full[0]
-
-    create_report_pages(page_data)
-
-
-    '''
     pdf_filepaths.clear()
     data_lst = get_report_data()
     process_lst = []
@@ -43,7 +36,7 @@ def create_report_cards():
         pdf_proc = mp.Process(target=create_report_pages, args=(data_entry,))
         process_lst.append(pdf_proc)
 
-    num_cores = mp.cpu_count
+    num_cores = mp.cpu_count()
 
     split_proc_list = np.array_split(process_lst, num_cores)
 
@@ -57,7 +50,6 @@ def create_report_cards():
 
     final_report_fp = create_final_report()
     return final_report_fp
-    '''
 
 
 def allsundays(year):
@@ -85,6 +77,7 @@ def get_report_data():
     '''
     docstr
     '''
+    report_lst = []
     all_team_data = db_get_team_data()
     all_individual_data = db_get_individual_data()
 
@@ -127,49 +120,10 @@ def get_report_data():
         data_lst_entry['Month-Data'] = month_data_lst
         data_lst_entry['Team-Data'] = team_data_lst
         data_lst_entry['Year-Data'] = year_data_lst
-        
 
-    data_lst = [{'Name': 'Jimmy Mattison',
-                 'Job': 'Driver',
-                 'Date': '7/18/2022',
-                 'Week-Date-Range': '12/17/22-12/23/22',
-                 'Week-Data': [
-                        {'Job-Type': '40\' Ocean Container', 'Average': '90', 'Num-Jobs': '4', 'Rank': '1'},
-                        {'Job-Type': '20\' Ocean Container', 'Average': '60', 'Num-Jobs': '2', 'Rank': '4'},
-                        {'Job-Type': 'Pallet Load', 'Average': '40', 'Num-Jobs': '12', 'Rank': '1'}],
-                 'Month-Date-Range': '13/10/22-13/20/22',
-                 'Month-Data': [
-                        {'Job-Type': '40\' Ocean Container', 'Average': '90', 'Num-Jobs': '4', 'Rank': '1'},
-                        {'Job-Type': '20\' Ocean Container', 'Average': '60', 'Num-Jobs': '2', 'Rank': '4'},
-                        {'Job-Type': 'Pallet Load', 'Average': '40', 'Num-Jobs': '12', 'Rank': '1'}],
-                 'Team-Data': [
-                        {'Team-Names': 'Jimmy, James, Dean', 'Average': '90', 'Num-Jobs': '4'},
-                        {'Team-Names': 'Jimmy, Mike, Melanie', 'Average': '80', 'Num-Jobs': '2'}],
-                 'Year-Date-Range': '13/10/22-13/20/22',
-                 'Year-Data': [
-                        {'Job-Type': '40\' Ocean Container', 'Month': 'Jan', 'Avg-Time': '150'},
-                        {'Job-Type': '40\' Ocean Container', 'Month': 'Feb', 'Avg-Time': '147'},
-                        {'Job-Type': '40\' Ocean Container', 'Month': 'Mar', 'Avg-Time': '130'},
-                        {'Job-Type': '40\' Ocean Container', 'Month': 'Apr', 'Avg-Time': '150'},
-                        {'Job-Type': '40\' Ocean Container', 'Month': 'May', 'Avg-Time': '140'},
-                        {'Job-Type': '40\' Ocean Container', 'Month': 'Jun', 'Avg-Time': '145'},
-                        {'Job-Type': '40\' Ocean Container', 'Month': 'Jul', 'Avg-Time': '120'},
-                        {'Job-Type': '20\' Ocean Container', 'Month': 'Jan', 'Avg-Time': '70'},
-                        {'Job-Type': '20\' Ocean Container', 'Month': 'Feb', 'Avg-Time': '60'},
-                        {'Job-Type': '20\' Ocean Container', 'Month': 'Mar', 'Avg-Time': '65'},
-                        {'Job-Type': '20\' Ocean Container', 'Month': 'Apr', 'Avg-Time': '78'},
-                        {'Job-Type': '20\' Ocean Container', 'Month': 'May', 'Avg-Time': '60'},
-                        {'Job-Type': '20\' Ocean Container', 'Month': 'Jun', 'Avg-Time': '55'},
-                        {'Job-Type': '20\' Ocean Container', 'Month': 'Jul', 'Avg-Time': '40'},
-                        {'Job-Type': 'Pallet Load', 'Month': 'Jan', 'Avg-Time': '50'},
-                        {'Job-Type': 'Pallet Load', 'Month': 'Feb', 'Avg-Time': '44'},
-                        {'Job-Type': 'Pallet Load', 'Month': 'Mar', 'Avg-Time': '42'},
-                        {'Job-Type': 'Pallet Load', 'Month': 'Apr', 'Avg-Time': '61'},
-                        {'Job-Type': 'Pallet Load', 'Month': 'May', 'Avg-Time': '47'},
-                        {'Job-Type': 'Pallet Load', 'Month': 'Jun', 'Avg-Time': '38'},
-                        {'Job-Type': 'Pallet Load', 'Month': 'Jul', 'Avg-Time': '30'}]}]
+        report_lst.append(data_lst_entry)
 
-    return data_lst
+    return report_lst
 
 
 def get_value_avgs(format_dict):
@@ -182,6 +136,31 @@ def get_value_avgs(format_dict):
         time_lst = []
         inner_dict = {'Job-Type': '', 'Average': '', 'Num-Jobs': '', 'Rank': ''}
         inner_dict['Job-Type'] = key
+
+        for entry in format_dict[key]:
+            time_lst.append(int(entry))
+
+        num_jobs = len(time_lst)
+        avg_time = round((sum(time_lst) / num_jobs), )
+
+        inner_dict['Average'] = str(avg_time)
+        inner_dict['Num-Jobs'] = num_jobs
+
+        dict_list.append(inner_dict)
+
+    return dict_list
+
+
+def get_team_value_avgs(format_dict): 
+    '''
+    docstr
+    '''
+    dict_keys = [*format_dict]
+    dict_list = []
+    for key in dict_keys:
+        time_lst = []
+        inner_dict = {'Team-Names': '', 'Average': '', 'Num-Jobs': ''}
+        inner_dict['Team-Names'] = key.replace('<', ', ')
 
         for entry in format_dict[key]:
             time_lst.append(int(entry))
@@ -239,8 +218,6 @@ def format_week_data(all_individual_data, name_entry, week_start):
     ret_lst = []
     entry_dict = {}
     current_date = dt.date.today()
-    week_start = dt.date(2022, 7, 1)
-    current_date = dt.date(2022, 7, 6)
 
     for entry in all_individual_data:
         entry_dt = entry[1]
@@ -262,8 +239,6 @@ def format_month_data(all_individual_data, name_entry, month_start):
     ret_lst = []
     entry_dict = {}
     current_date = dt.date.today()
-    month_start = dt.date(2022, 7, 1)
-    current_date = dt.date(2022, 7, 6)
 
     for entry in all_individual_data:
         entry_dt = entry[1]
@@ -282,7 +257,21 @@ def format_team_data(all_team_data, name_entry, month_start):
     '''
     pass
     '''
-    return []
+    ret_lst = []
+    entry_dict = {}
+    current_date = dt.date.today()
+
+    for entry in all_team_data:
+        entry_dt = entry[1]
+
+        if entry[0].find(name_entry) != -1 and (entry_dt >= month_start and entry_dt <= current_date):
+            if entry[0] not in entry_dict:
+                entry_dict[entry[0]] = [entry[4]]
+            else:
+                entry_dict[entry[0]].append(entry[4])
+
+    ret_lst = get_team_value_avgs(entry_dict)
+    return ret_lst
 
 
 def format_year_data(all_individual_data, name_entry, year_start):
@@ -292,8 +281,6 @@ def format_year_data(all_individual_data, name_entry, year_start):
     ret_lst = []
     entry_dict = {}
     current_date = dt.date.today()
-    year_start = dt.date(2022, 7, 1)
-    current_date = dt.date(2022, 7, 6)
 
     for entry in all_individual_data:
         entry_dt = entry[1]
@@ -342,7 +329,7 @@ def create_front_page(page_data):
     report_canvas.setFont('Calibri', 12)
     report_canvas.drawString(95, 697, page_data['Name'])
     report_canvas.drawString(77, 674.5, page_data['Job'])
-    report_canvas.drawString(87, 657.5, page_data['Date'])
+    report_canvas.drawString(87, 657.5, dt.datetime.strftime(page_data['Date'], '%m/%d/%Y'))
 
     report_canvas.setFont('Calibri', 15)
     report_canvas.drawString(135, 623, page_data['Week-Date-Range'])
@@ -354,8 +341,8 @@ def create_front_page(page_data):
 
     for week_data in page_data['Week-Data']:
         report_canvas.drawString(54, week_start_pixel_y, week_data['Job-Type'])
-        report_canvas.drawString(287, week_start_pixel_y, week_data['Average'])
-        report_canvas.drawString(422, week_start_pixel_y, week_data['Num-Jobs'])
+        report_canvas.drawString(287, week_start_pixel_y, str(week_data['Average']))
+        report_canvas.drawString(422, week_start_pixel_y, str(week_data['Num-Jobs']))
         report_canvas.drawString(494, week_start_pixel_y, week_data['Rank'])
         week_start_pixel_y -= 30
 
@@ -363,15 +350,15 @@ def create_front_page(page_data):
 
     for month_data in page_data['Month-Data']:
         report_canvas.drawString(54, month_start_pixel_y, month_data['Job-Type'])
-        report_canvas.drawString(287, month_start_pixel_y, month_data['Average'])
-        report_canvas.drawString(422, month_start_pixel_y, month_data['Num-Jobs'])
+        report_canvas.drawString(287, month_start_pixel_y, str(month_data['Average']))
+        report_canvas.drawString(422, month_start_pixel_y, str(month_data['Num-Jobs']))
         report_canvas.drawString(494, month_start_pixel_y, month_data['Rank'])
         month_start_pixel_y -= 30
 
     for team_data in page_data['Team-Data']:
         report_canvas.drawString(54, month_start_pixel_y, team_data['Team-Names'])
-        report_canvas.drawString(287, month_start_pixel_y, team_data['Average'])
-        report_canvas.drawString(422, month_start_pixel_y, team_data['Num-Jobs'])
+        report_canvas.drawString(287, month_start_pixel_y, str(team_data['Average']))
+        report_canvas.drawString(422, month_start_pixel_y, str(team_data['Num-Jobs']))
         month_start_pixel_y -= 20
 
     graph_fp = create_graph(page_data)
@@ -418,11 +405,28 @@ def get_back_page():
     return output_fp
 
 
-def create_company_report():
+def create_final_report():
     '''
     return fulepath
     '''
-    output_fp = ''
+    pdf_merger = PdfFileMerger()
+
+    if os.path.exists(os.path.abspath
+                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Reports')):
+        f_path = os.path.abspath(
+            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Reports')
+    else:
+        f_path = os.path.abspath('Report Card Reports')
+
+    f_name = '\\ReportCardReport-' + dt.datetime.now().strftime('%m-%d-%y-%H-%M-%S') + '.pdf'
+
+    output_fp = f_path + f_name
+    for pdf_fp in pdf_filepaths:
+        pdf_merger.append(pdf_fp)
+
+    with Path(output_fp).open(mode='wb') as output_file:
+        pdf_merger.write(output_file)
+
     return output_fp
 
 
@@ -452,7 +456,8 @@ def merge_single_report(front_canvas, page_data):
 
     return output_fp
 
-def create_final_report():
+
+def create_company_report():
     '''
     return filepath
     '''
