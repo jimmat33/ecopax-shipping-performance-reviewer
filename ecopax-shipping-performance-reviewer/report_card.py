@@ -151,7 +151,7 @@ def get_value_avgs(format_dict):
     return dict_list
 
 
-def get_team_value_avgs(format_dict): 
+def get_team_value_avgs(format_dict):
     '''
     docstr
     '''
