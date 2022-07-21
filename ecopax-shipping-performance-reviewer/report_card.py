@@ -3,6 +3,7 @@ docstr
 '''
 import datetime as dt
 from datetime import date, timedelta
+from time import strftime
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 import os
@@ -61,8 +62,8 @@ def create_report_cards():
 
 def allsundays(year):
     """This code was provided in the previous answer! It's not mine!"""
-    d = date(year, 1, 1)                    # January 1st                                                          
-    d += timedelta(days=6 - d.weekday())  # First Sunday                                                         
+    d = date(year, 1, 1)                    # January 1st
+    d += timedelta(days=6 - d.weekday())  # First Sunday
     while d.year == year:
         yield d
         d += timedelta(days=7)
@@ -73,9 +74,9 @@ def get_week_dates(year):
     docstr
     '''
     Dict = {}
-    for wn,d in enumerate(allsundays(year)):
+    for w_n, d in enumerate(allsundays(year)):
         # This is my only contribution!
-        Dict[wn+1] = [(d + timedelta(days=k)).isoformat() for k in range(0,7) ]
+        Dict[w_n + 1] = [(d + timedelta(days=k)).isoformat() for k in range(0,7) ]
 
     return Dict
 
@@ -99,9 +100,11 @@ def get_report_data():
     year_start_str = year_start.strftime('%m/%d/%y')
 
     names_set = set()
-    {names_set.add([entry[0], entry[5]]) for entry in all_individual_data}
+    {names_set.add((entry[0], entry[5])) for entry in all_individual_data}
 
     for name_entry in names_set:
+        name_entry = list(name_entry)
+
         data_lst_entry = {'Name': '', 'Job': '', 'Date': '',
                           'Week-Date-Range': '', 'Week-Data': [],
                           'Month-Date-Range': '', 'Month-Data': [],
@@ -120,6 +123,10 @@ def get_report_data():
         team_data_lst = format_team_data(all_team_data, name_entry[0], month_start)
         year_data_lst = format_year_data(all_individual_data, name_entry[0], year_start)
 
+        data_lst_entry['Week-Data'] = week_data_lst
+        data_lst_entry['Month-Data'] = month_data_lst
+        data_lst_entry['Team-Data'] = team_data_lst
+        data_lst_entry['Year-Data'] = year_data_lst
         
 
     data_lst = [{'Name': 'Jimmy Mattison',
@@ -165,18 +172,110 @@ def get_report_data():
     return data_lst
 
 
+def get_value_avgs(format_dict):
+    '''
+    docstr
+    '''
+    dict_keys = [*format_dict]
+    dict_list = []
+    for key in dict_keys:
+        time_lst = []
+        inner_dict = {'Job-Type': '', 'Average': '', 'Num-Jobs': '', 'Rank': ''}
+        inner_dict['Job-Type'] = key
+
+        for entry in format_dict[key]:
+            time_lst.append(int(entry))
+
+        num_jobs = len(time_lst)
+        avg_time = round((sum(time_lst) / num_jobs), )
+
+        inner_dict['Average'] = str(avg_time)
+        inner_dict['Num-Jobs'] = num_jobs
+
+        dict_list.append(inner_dict)
+
+    return dict_list
+
+
+def get_year_value_avgs(format_dict):
+    '''
+    docstr
+    '''
+    dict_keys = [*format_dict]
+    dict_list = []
+    month_avg_dict = {}
+    for key in dict_keys:
+        time_lst = []
+
+        for entry in format_dict[key]:
+            entry_month = dt.datetime.strftime(entry[1], '%b')
+
+            if entry_month not in month_avg_dict:
+                month_avg_dict[entry_month] = [int(entry[0])]
+            else:
+                month_avg_dict[entry_month].append(int(entry[0]))
+
+        month_dict_keys = [*month_avg_dict]
+        for month_key in month_dict_keys:
+            inner_dict = {'Job-Type': '', 'Month': '', 'Avg-Time': ''}
+            inner_dict['Job-Type'] = key
+            time_lst = month_avg_dict[month_key]
+
+            num_jobs = len(time_lst)
+            avg_time = round((sum(time_lst) / num_jobs), )
+
+            inner_dict['Avg-Time'] = str(avg_time)
+            inner_dict['Month'] = month_key
+
+            dict_list.append(inner_dict)
+
+    return dict_list
+
+
 def format_week_data(all_individual_data, name_entry, week_start):
     '''
     docstr
     '''
-    return []
+    ret_lst = []
+    entry_dict = {}
+    current_date = dt.date.today()
+    week_start = dt.date(2022, 7, 1)
+    current_date = dt.date(2022, 7, 6)
+
+    for entry in all_individual_data:
+        entry_dt = entry[1]
+
+        if entry[0] == name_entry and (entry_dt >= week_start and entry_dt <= current_date):
+            if entry[2] not in entry_dict:
+                entry_dict[entry[2]] = [entry[4]]
+            else:
+                entry_dict[entry[2]].append(entry[4])
+
+    ret_lst = get_value_avgs(entry_dict)
+    return ret_lst
 
 
 def format_month_data(all_individual_data, name_entry, month_start):
     '''
     docstr
     '''
-    return []
+    ret_lst = []
+    entry_dict = {}
+    current_date = dt.date.today()
+    month_start = dt.date(2022, 7, 1)
+    current_date = dt.date(2022, 7, 6)
+
+    for entry in all_individual_data:
+        entry_dt = entry[1]
+
+        if entry[0] == name_entry and (entry_dt >= month_start and entry_dt <= current_date):
+            if entry[2] not in entry_dict:
+                entry_dict[entry[2]] = [entry[4]]
+            else:
+                entry_dict[entry[2]].append(entry[4])
+
+    ret_lst = get_value_avgs(entry_dict)
+    return ret_lst
 
 
 def format_team_data(all_team_data, name_entry, month_start):
@@ -190,7 +289,23 @@ def format_year_data(all_individual_data, name_entry, year_start):
     '''
     docstr
     '''
-    return []
+    ret_lst = []
+    entry_dict = {}
+    current_date = dt.date.today()
+    year_start = dt.date(2022, 7, 1)
+    current_date = dt.date(2022, 7, 6)
+
+    for entry in all_individual_data:
+        entry_dt = entry[1]
+
+        if entry[0] == name_entry and (entry_dt >= year_start and entry_dt <= current_date):
+            if entry[2] not in entry_dict:
+                entry_dict[entry[2]] = [[entry[4], entry_dt]]
+            else:
+                entry_dict[entry[2]].append([entry[4], entry_dt])
+
+    ret_lst = get_year_value_avgs(entry_dict)
+    return ret_lst
 
 
 def create_report_pages(page_data):

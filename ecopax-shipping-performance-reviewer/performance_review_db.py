@@ -81,7 +81,7 @@ def db_add_performance_entry(performance_prop_list, add_type):
                                                 AND JobDate =? '''
                         cur.execute(check_sql_statement, [performance_prop_list[0],
                                                           performance_prop_list[4],
-                                                          performance_prop_list[2]])
+                                                          performance_prop_list[1]])
                         rows = cur.fetchall()
 
                         performance_prop_list[0] = re.sub('[\"\']', '', performance_prop_list[0])
