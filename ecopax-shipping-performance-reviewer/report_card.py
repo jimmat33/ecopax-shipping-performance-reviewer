@@ -3,7 +3,8 @@ docstr
 '''
 import datetime as dt
 from datetime import date, timedelta
-from time import strftime
+import timeit
+from time import strftime, time, perf_counter
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 import os
@@ -13,6 +14,7 @@ import numpy as np
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Image
+from dateutil.relativedelta import relativedelta
 from PyPDF2 import PdfFileWriter, PdfFileReader, PdfFileMerger
 from reportlab.lib.units import inch
 import io
@@ -25,6 +27,17 @@ def create_report_cards(manager):
     '''
     docstr
     '''
+    start = timeit.default_timer()
+    '''
+    pdf_filepaths = []
+
+    data_lst = get_report_data()
+    for data_entry in data_lst:
+        try:
+            create_report_pages(data_entry, pdf_filepaths)
+        except Exception as exc:
+            print('\n[Exception]:' + str(exc) + '\n')
+    '''
     pdf_filepaths = manager.list()
 
     data_lst = get_report_data()
@@ -34,7 +47,7 @@ def create_report_cards(manager):
         pdf_proc = mp.Process(target=create_report_pages, args=(data_entry, pdf_filepaths,))
         process_lst.append(pdf_proc)
 
-    num_cores = mp.cpu_count()
+    num_cores = mp.cpu_count() - 1
 
     split_proc_list = np.array_split(process_lst, num_cores)
 
@@ -47,6 +60,8 @@ def create_report_cards(manager):
             pdf_process.join()
 
     final_report_fp = create_final_report(pdf_filepaths)
+    stop = timeit.default_timer()
+    print(f'\n\nDone, Time Ran: {(stop-start)/60} minutes')
     return final_report_fp
 
 
@@ -149,6 +164,15 @@ def get_value_avgs(format_dict):
     return dict_list
 
 
+def fix_team_list(dict_list):
+    '''
+    docstr
+    '''
+    sorted_job_lst = (sorted(dict_list, key=lambda item: (item['Num-Jobs'], item['Average'])))
+    sorted_job_lst.reverse()
+    return sorted_job_lst[:8]
+
+
 def get_team_value_avgs(format_dict):
     '''
     docstr
@@ -158,7 +182,15 @@ def get_team_value_avgs(format_dict):
     for key in dict_keys:
         time_lst = []
         inner_dict = {'Team-Names': '', 'Average': '', 'Num-Jobs': ''}
-        inner_dict['Team-Names'] = key.replace('<', ', ')
+
+        name_str = ''
+        for name in key:
+            if key.index(name) == len(key) - 1:
+                name_str += name
+            else:
+                name_str += (name + ', ')
+
+        inner_dict['Team-Names'] = name_str
 
         for entry in format_dict[key]:
             time_lst.append(int(entry))
@@ -170,6 +202,10 @@ def get_team_value_avgs(format_dict):
         inner_dict['Num-Jobs'] = num_jobs
 
         dict_list.append(inner_dict)
+
+    if len(dict_list) > 8:
+        shortened_lst = fix_team_list(dict_list)
+        return shortened_lst
 
     return dict_list
 
@@ -262,11 +298,15 @@ def format_team_data(all_team_data, name_entry, month_start):
     for entry in all_team_data:
         entry_dt = entry[1]
 
-        if entry[0].find(name_entry) != -1 and (entry_dt >= month_start and entry_dt <= current_date):
-            if entry[0] not in entry_dict:
-                entry_dict[entry[0]] = [entry[4]]
+        entry_names_lst = entry[0].split(',')
+
+        if (name_entry in entry_names_lst and len(entry_names_lst) > 1) and (entry_dt >= month_start and entry_dt <= current_date):
+            sorted_entries = tuple(sorted(entry_names_lst))
+
+            if sorted_entries not in entry_dict:
+                entry_dict[sorted_entries] = [entry[4]]
             else:
-                entry_dict[entry[0]].append(entry[4])
+                entry_dict[sorted_entries].append(entry[4])
 
     ret_lst = get_team_value_avgs(entry_dict)
     return ret_lst
@@ -467,6 +507,9 @@ def create_graph(page_data):
     '''
     return fp
     '''
+    months = []
+    dt_months = []
+
     if os.path.exists(os.path.abspath
                       ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
         f_path = os.path.abspath(
@@ -479,7 +522,16 @@ def create_graph(page_data):
     graph_data = page_data['Year-Data']
     formatted_data = format_graph_data(graph_data)
 
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    current_month = dt.datetime.today()
+    dt_months.append(current_month)
+
+    for i in range(1, 12):
+        next_month = current_month + relativedelta(months=i)
+        dt_months.append(next_month)
+
+    for month in dt_months:
+        months.append(month.strftime('%b'))
+
     acceptable_formats = ['-', '-.', ':', '--', '-', '-.', ':', '--']
     acceptable_markers = ['o', 'v', 's', '*', '+', 'o', 'v', 's', '*', '+']
 
@@ -489,8 +541,10 @@ def create_graph(page_data):
         dataset_vals = dataset[1:]
         plt.plot(np.array(months[:len(dataset_vals)]), np.array(dataset_vals), acceptable_formats[formatted_data.index(dataset)], label=type_name, marker=acceptable_markers[formatted_data.index(dataset)], color='black')
 
+    plt.ylim(25, 200)
     plt.legend(prop={'size': 7})
     plt.savefig(output_fp)
+    plt.close()
 
     return output_fp
 

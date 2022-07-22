@@ -200,3 +200,13 @@ class PerformanceReviewGUI():
         docstr
         '''
         db_clear_database()
+
+        if os.path.exists(os.path.abspath
+                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
+            f_path = os.path.abspath(
+            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')
+        else:
+            f_path = os.path.abspath('Report Card Cache')
+
+        for f in os.listdir(f_path):
+            os.remove(os.path.join(f_path, f))
