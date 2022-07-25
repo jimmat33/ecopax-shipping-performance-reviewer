@@ -1,6 +1,7 @@
 '''
 docstr
 '''
+import timeit
 import os
 import subprocess
 import tkinter as tk
@@ -19,12 +20,11 @@ class PerformanceReviewGUI():
     '''
     # pylint: disable=R0902
     # pylint: disable=W0703
-    def __init__(self, manager):
+    def __init__(self):
         self.root = tk.Tk()
         self.root.geometry('800x400')
         self.root.title("Shipping Performance Reviewer")
         self.root.resizable(False, False)
-        self.manager = manager
         try:
             img = tk.PhotoImage(file=(os.path.abspath('gui_icon.png')))
             self.root.tk.call('wm', 'iconphoto', self.root._w, img)
@@ -40,14 +40,14 @@ class PerformanceReviewGUI():
         self.remove_sheet_button = Button(self.root, text='Remove Spreadsheet', state='normal',
                                           command=self.remove_spreadsheet_btn_click)
 
-        self.goto_report_loc_button = Button(self.root, text='Go To Report Folder', state='normal',
+        self.goto_report_loc_button = Button(self.root, text='Go To Excel Report Folder', state='normal',
                                              command=self.open_file_loc)
 
-        self.generate_report_button = Button(self.root, text='Generate Report', state='normal',
+        self.generate_report_button = Button(self.root, text='Generate Reports', state='normal',
                                              command=self.generate_report)
 
-        self.report_card_button = Button(self.root, text='Create Report Cards', state='normal',
-                                         command=self.create_report_cards_btn_click)
+        self.report_card_button = Button(self.root, text='Go To Report Card Folder', state='normal',
+                                         command=self.go_to_report_cards_btn_click)
 
         self.excel_sheet_frame = Frame(self.root)
 
@@ -125,6 +125,7 @@ class PerformanceReviewGUI():
         # pylint: disable=E1102
         filename_list = filedialog.askopenfilenames(initialdir="", title="Select a File",
                                                     filetypes=(("all files", "*.*"),))
+        start = timeit.default_timer()
 
         for filename in filename_list:
             TWExportExcelFile(filename)
@@ -149,6 +150,9 @@ class PerformanceReviewGUI():
             self.excel_sheet_frame.insert(parent='', index='end', iid=self.excel_index, text='',
                                           values=(formatted_filename, filepath_str, file_lst[0][2]))
             self.excel_index += 1
+
+            stop = timeit.default_timer()
+            print(f'\n\nDone, Time Ran: {(stop - start)/60} minutes')
 
     def remove_spreadsheet_btn_click(self):
         '''
@@ -176,17 +180,32 @@ class PerformanceReviewGUI():
         except Exception:
             pass
 
-    def create_report_cards_btn_click(self):
+    def go_to_report_cards_btn_click(self):
         '''
         docstr
         '''
-        create_report_cards(self.manager)
+        filebrowser_path = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
+
+        if os.path.exists(os.path.abspath
+                          ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Reports')):
+            path = os.path.abspath(
+                'Ecopax-Performance-Reviwer-Program-Files\\Report Card Reports')
+        else:
+            path = os.path.abspath('PReport Card Reports')
+        try:
+            if os.path.isdir(path):
+                subprocess.run([filebrowser_path, path], check=True)
+            elif os.path.isfile(path):
+                subprocess.run([filebrowser_path, '/select,', os.path.normpath(path)], check=True)
+        except Exception:
+            pass
 
     def generate_report(self):
         '''
         docstr
         '''
         create_report()
+        create_report_cards()
 
     def on_closing(self):
         '''
@@ -202,9 +221,9 @@ class PerformanceReviewGUI():
         db_clear_database()
 
         if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
+                          ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
             f_path = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')
+                'Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')
         else:
             f_path = os.path.abspath('Report Card Cache')
 

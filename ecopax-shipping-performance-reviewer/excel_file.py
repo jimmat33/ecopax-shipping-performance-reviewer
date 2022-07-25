@@ -1,6 +1,9 @@
 '''
 docstr
 '''
+import multiprocessing as mp
+import numpy as np
+import timeit
 import datetime
 import re
 import os

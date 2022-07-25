@@ -10,6 +10,5 @@ from gui_application import PerformanceReviewGUI
 
 if __name__ == '__main__':
     mp.freeze_support()
-    manager = mp.Manager()
-    gui_obj = PerformanceReviewGUI(manager)
+    gui_obj = PerformanceReviewGUI()
     gui_obj.run_gui()

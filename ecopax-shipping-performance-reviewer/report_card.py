@@ -4,7 +4,6 @@ docstr
 import datetime as dt
 from datetime import date, timedelta
 import timeit
-from time import strftime, time, perf_counter
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 import os
@@ -23,12 +22,11 @@ from reportlab.pdfbase.ttfonts import TTFont
 from performance_review_db import db_get_individual_data, db_get_team_data
 
 
-def create_report_cards(manager):
+def create_report_cards():
     '''
     docstr
     '''
     start = timeit.default_timer()
-    '''
     pdf_filepaths = []
 
     data_lst = get_report_data()
@@ -37,27 +35,6 @@ def create_report_cards(manager):
             create_report_pages(data_entry, pdf_filepaths)
         except Exception as exc:
             print('\n[Exception]:' + str(exc) + '\n')
-    '''
-    pdf_filepaths = manager.list()
-
-    data_lst = get_report_data()
-    process_lst = []
-
-    for data_entry in data_lst:
-        pdf_proc = mp.Process(target=create_report_pages, args=(data_entry, pdf_filepaths,))
-        process_lst.append(pdf_proc)
-
-    num_cores = mp.cpu_count() - 1
-
-    split_proc_list = np.array_split(process_lst, num_cores)
-
-    for lst in split_proc_list:
-        for pdf_process in lst:
-            pdf_process.start()
-
-    for lst in split_proc_list:
-        for pdf_process in lst:
-            pdf_process.join()
 
     final_report_fp = create_final_report(pdf_filepaths)
     stop = timeit.default_timer()
@@ -554,7 +531,7 @@ def format_graph_data(graph_data):
     docstr
     '''
     job_types = set()
-    lst_cmp = {job_types.add(entry['Job-Type']) for entry in graph_data}
+    {job_types.add(entry['Job-Type']) for entry in graph_data}
     num_job_type = len(job_types)
 
     data_lst = []
