@@ -5,7 +5,7 @@ import timeit
 import os
 import subprocess
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import Label, filedialog, ttk
 from tkinter.ttk import Scrollbar, Button, Frame
 from create_report import create_report
 from performance_review_db import (db_get_excel_file, db_get_all_excel_filepaths,
@@ -126,7 +126,8 @@ class PerformanceReviewGUI():
         filename_list = filedialog.askopenfilenames(initialdir="", title="Select a File",
                                                     filetypes=(("all files", "*.*"),))
         start = timeit.default_timer()
-
+        self.root.withdraw()
+        splash = Splash(self.root)
         for filename in filename_list:
             TWExportExcelFile(filename)
 
@@ -153,6 +154,9 @@ class PerformanceReviewGUI():
 
             stop = timeit.default_timer()
             print(f'\n\nDone, Time Ran: {(stop - start)/60} minutes')
+
+        splash.destroy()
+        self.root.deiconify()
 
     def remove_spreadsheet_btn_click(self):
         '''
@@ -191,7 +195,7 @@ class PerformanceReviewGUI():
             path = os.path.abspath(
                 'Ecopax-Performance-Reviwer-Program-Files\\Report Card Reports')
         else:
-            path = os.path.abspath('PReport Card Reports')
+            path = os.path.abspath('Report Card Reports')
         try:
             if os.path.isdir(path):
                 subprocess.run([filebrowser_path, path], check=True)
@@ -204,8 +208,14 @@ class PerformanceReviewGUI():
         '''
         docstr
         '''
+        self.root.withdraw()
+        splash = Splash(self.root)
+
         create_report()
         create_report_cards()
+
+        splash.destroy()
+        self.root.deiconify()
 
     def on_closing(self):
         '''
@@ -229,3 +239,24 @@ class PerformanceReviewGUI():
 
         for f in os.listdir(f_path):
             os.remove(os.path.join(f_path, f))
+
+
+class Splash(tk.Toplevel):
+    def __init__(self, parent):
+        tk.Toplevel.__init__(self, parent)
+        self.title("Shipping Performance Reviewer")
+        self.geometry('250x100')
+
+        try:
+            img = tk.PhotoImage(file=(os.path.abspath('gui_icon.png')))
+            self.tk.call('wm', 'iconphoto', self._w, img)
+        except Exception:
+            img = tk.PhotoImage(file=(os.path.abspath
+                                      ('Ecopax-Performance-Reviwer-Program-Files\\gui_icon.png')))
+            self.tk.call('wm', 'iconphoto', self._w, img)
+
+        self.wait_label = Label(self, text='App Working\nPlease Wait...', state='normal', font=('Arial', 24), anchor=tk.CENTER)
+        self.wait_label.pack(anchor=tk.CENTER)
+
+        # required to make window show before the program gets to the mainloop
+        self.update()

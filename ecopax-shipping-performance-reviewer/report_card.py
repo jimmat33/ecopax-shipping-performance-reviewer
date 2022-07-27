@@ -193,31 +193,37 @@ def get_year_value_avgs(format_dict):
     '''
     dict_keys = [*format_dict]
     dict_list = []
-    month_avg_dict = {}
+    job_type_dict = {}
     for key in dict_keys:
         time_lst = []
-
+        month_avg_dict = {}
         for entry in format_dict[key]:
-            entry_month = dt.datetime.strftime(entry[1], '%b')
+            if key not in job_type_dict:
+                job_type_dict[key] = {}
+
+            entry_month = dt.datetime.strftime(entry[1], '%b %Y')
 
             if entry_month not in month_avg_dict:
                 month_avg_dict[entry_month] = [int(entry[0])]
             else:
                 month_avg_dict[entry_month].append(int(entry[0]))
 
-        month_dict_keys = [*month_avg_dict]
-        for month_key in month_dict_keys:
-            inner_dict = {'Job-Type': '', 'Month': '', 'Avg-Time': ''}
-            inner_dict['Job-Type'] = key
-            time_lst = month_avg_dict[month_key]
+            month_dict_keys = [*month_avg_dict]
+            job_type_dict[key] = month_avg_dict
 
-            num_jobs = len(time_lst)
-            avg_time = round((sum(time_lst) / num_jobs), )
+        for job_key in job_type_dict:
+            for month_key in month_dict_keys:
+                inner_dict = {'Job-Type': '', 'Month': '', 'Avg-Time': ''}
+                inner_dict['Job-Type'] = job_key
+                time_lst = month_avg_dict[month_key]
 
-            inner_dict['Avg-Time'] = str(avg_time)
-            inner_dict['Month'] = month_key
+                num_jobs = len(time_lst)
+                avg_time = round((sum(time_lst) / num_jobs), )
 
-            dict_list.append(inner_dict)
+                inner_dict['Avg-Time'] = str(avg_time)
+                inner_dict['Month'] = month_key
+
+                dict_list.append(inner_dict)
 
     return dict_list
 
@@ -289,12 +295,31 @@ def format_team_data(all_team_data, name_entry, month_start):
     return ret_lst
 
 
+def insertion_sort(array):
+    '''
+    docstr
+    '''
+    if len(array) > 1:
+        for i in range(1, len(array)):
+            key_item = dt.datetime.strptime(array[i]['Month'], '%b %Y')
+            j = i - 1
+            while j >= 0 and dt.datetime.strptime(array[j]['Month'], '%b %Y') > key_item:
+                array[j + 1][1] = array[j][1]
+                j -= 1
+            array[j + 1][1] = key_item
+
+    return array
+
+
 def format_year_data(all_individual_data, name_entry, year_start):
     '''
     docstr
     '''
+    months = []
+    dt_months = []
     ret_lst = []
     entry_dict = {}
+    sorted_ret_lst = []
     current_date = dt.date.today()
 
     for entry in all_individual_data:
@@ -307,7 +332,21 @@ def format_year_data(all_individual_data, name_entry, year_start):
                 entry_dict[entry[2]].append([entry[4], entry_dt])
 
     ret_lst = get_year_value_avgs(entry_dict)
-    return ret_lst
+
+    current_month = dt.datetime.today()
+
+    for i in range(11, 0, -1):
+        next_month = current_month + relativedelta(months=i)
+        dt_months.append(next_month)
+    for month in dt_months:
+        months.append(month.strftime('%b'))
+
+    months.reverse()
+    months.append(current_month.strftime('%b'))
+
+    sorted_ret_lst = insertion_sort(ret_lst)
+
+    return sorted_ret_lst
 
 
 def create_report_pages(page_data, pdf_filepaths):
@@ -376,8 +415,7 @@ def create_front_page(page_data):
         report_canvas.drawString(422, month_start_pixel_y, str(team_data['Num-Jobs']))
         month_start_pixel_y -= 20
 
-    graph_fp = create_graph(page_data)
-    report_canvas.drawImage(graph_fp, 0.55 * inch, 0.4 * inch)
+    # year data printing here
 
     # make modifications here
     report_canvas.save()
@@ -478,71 +516,3 @@ def create_company_report():
     '''
     output_fp = ''
     return output_fp
-
-
-def create_graph(page_data):
-    '''
-    return fp
-    '''
-    months = []
-    dt_months = []
-
-    if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
-        f_path = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')
-    else:
-        f_path = os.path.abspath('Report Card Cache')
-
-    output_fp = f_path + '\\' + page_data['Name'] + '-graph.png'
-
-    graph_data = page_data['Year-Data']
-    formatted_data = format_graph_data(graph_data)
-
-    current_month = dt.datetime.today()
-    dt_months.append(current_month)
-
-    for i in range(1, 12):
-        next_month = current_month + relativedelta(months=i)
-        dt_months.append(next_month)
-
-    for month in dt_months:
-        months.append(month.strftime('%b'))
-
-    acceptable_formats = ['-', '-.', ':', '--', '-', '-.', ':', '--']
-    acceptable_markers = ['o', 'v', 's', '*', '+', 'o', 'v', 's', '*', '+']
-
-    plt.figure(figsize=(5.75, 2))
-    for dataset in formatted_data:
-        type_name = re.sub('[\"]', '', dataset[0])
-        dataset_vals = dataset[1:]
-        plt.plot(np.array(months[:len(dataset_vals)]), np.array(dataset_vals), acceptable_formats[formatted_data.index(dataset)], label=type_name, marker=acceptable_markers[formatted_data.index(dataset)], color='black')
-
-    plt.ylim(25, 200)
-    plt.legend(prop={'size': 7})
-    plt.savefig(output_fp)
-    plt.close()
-
-    return output_fp
-
-
-def format_graph_data(graph_data):
-    '''
-    docstr
-    '''
-    job_types = set()
-    {job_types.add(entry['Job-Type']) for entry in graph_data}
-    num_job_type = len(job_types)
-
-    data_lst = []
-
-    for i in range(num_job_type):
-        current_job_type = list(job_types)[i]
-        inner_lst = []
-        inner_lst.append(current_job_type)
-        for item in graph_data:
-            if item['Job-Type'] == current_job_type:
-                inner_lst.append(int(item['Avg-Time']))
-        data_lst.append(inner_lst)
-
-    return data_lst
