@@ -211,19 +211,18 @@ def get_year_value_avgs(format_dict):
             month_dict_keys = [*month_avg_dict]
             job_type_dict[key] = month_avg_dict
 
-        for job_key in job_type_dict:
-            for month_key in month_dict_keys:
-                inner_dict = {'Job-Type': '', 'Month': '', 'Avg-Time': ''}
-                inner_dict['Job-Type'] = job_key
-                time_lst = month_avg_dict[month_key]
+        for month_key in month_dict_keys:
+            inner_dict = {'Job-Type': '', 'Month': '', 'Avg-Time': ''}
+            inner_dict['Job-Type'] = key
+            time_lst = month_avg_dict[month_key]
 
-                num_jobs = len(time_lst)
-                avg_time = round((sum(time_lst) / num_jobs), )
+            num_jobs = len(time_lst)
+            avg_time = round((sum(time_lst) / num_jobs), 1)
 
-                inner_dict['Avg-Time'] = str(avg_time)
-                inner_dict['Month'] = month_key
+            inner_dict['Avg-Time'] = str(avg_time)
+            inner_dict['Month'] = month_key
 
-                dict_list.append(inner_dict)
+            dict_list.append(inner_dict)
 
     return dict_list
 
@@ -299,16 +298,28 @@ def insertion_sort(array):
     '''
     docstr
     '''
-    if len(array) > 1:
-        for i in range(1, len(array)):
-            key_item = dt.datetime.strptime(array[i]['Month'], '%b %Y')
-            j = i - 1
-            while j >= 0 and dt.datetime.strptime(array[j]['Month'], '%b %Y') > key_item:
-                array[j + 1][1] = array[j][1]
-                j -= 1
-            array[j + 1][1] = key_item
+    try:
+        if len(array) > 1:
+            for i in range(1, len(array)):
+                key_item = dt.datetime.strptime(array[i]['Month'], '%b %Y')
+                j = i - 1
+                while j >= 0 and dt.datetime.strptime(array[j]['Month'], '%b %Y') > key_item:
+                    array[j + 1][1] = array[j][1]
+                    j -= 1
+                array[j + 1][1] = key_item
 
-    return array
+        return array
+    except Exception:
+        if len(array) > 1:
+            for i in range(1, len(array)):
+                key_item = dt.datetime.strptime(array[i], '%b')
+                j = i - 1
+                while j >= 0 and dt.datetime.strptime(array[j], '%b') > key_item:
+                    array[j + 1] = array[j]
+                    j -= 1
+                array[j + 1] = key_item
+
+        return array
 
 
 def format_year_data(all_individual_data, name_entry, year_start):
@@ -363,6 +374,30 @@ def create_report_pages(page_data, pdf_filepaths):
         pdf_filepaths.insert(0, full_report)
 
 
+def get_sorted_months(year_vals_dict):
+    '''
+    doctsr
+    '''
+    month_lst = []
+    ret_months = []
+    for val in year_vals_dict:
+        month_year_str = val['Month'][:3]
+        month_lst.append(month_year_str)
+
+    all_months = list(set(month_lst))
+    sorted_months = insertion_sort(all_months)
+
+    for month_str in sorted_months:
+        try:
+            new_month_str = dt.datetime.strftime(month_str, '%b')
+        except Exception:
+            new_month_str = month_str
+
+        ret_months.append(new_month_str)
+
+    return ret_months
+
+
 def create_front_page(page_data):
     '''
     docstr
@@ -414,6 +449,16 @@ def create_front_page(page_data):
         report_canvas.drawString(287, month_start_pixel_y, str(team_data['Average']))
         report_canvas.drawString(422, month_start_pixel_y, str(team_data['Num-Jobs']))
         month_start_pixel_y -= 20
+
+    months_to_write = get_sorted_months(page_data['Year-Data'])
+
+    months_to_write = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    report_canvas.setFont('Calibri', 10)
+    month_str_pixel_x = 140
+    for month_str in months_to_write:
+        report_canvas.drawString(month_str_pixel_x, 183, month_str)
+        month_str_pixel_x += 40
 
     # year data printing here
 
