@@ -16,6 +16,7 @@ from reportlab.platypus import Image
 from dateutil.relativedelta import relativedelta
 from PyPDF2 import PdfFileWriter, PdfFileReader, PdfFileMerger
 from reportlab.lib.units import inch
+import traceback
 import io
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -34,7 +35,7 @@ def create_report_cards():
         try:
             create_report_pages(data_entry, pdf_filepaths)
         except Exception as exc:
-            print('\n[Exception]:' + str(exc) + '\n')
+            traceback.print_exc()
 
     final_report_fp = create_final_report(pdf_filepaths)
     stop = timeit.default_timer()
@@ -44,8 +45,8 @@ def create_report_cards():
 
 def allsundays(year):
     """This code was provided in the previous answer! It's not mine!"""
-    d = date(year, 1, 1)                    # January 1st
-    d += timedelta(days=6 - d.weekday())  # First Sunday
+    d = date(year, 1, 1)
+    d += timedelta(days=6 - d.weekday())
     while d.year == year:
         yield d
         d += timedelta(days=7)
@@ -147,7 +148,7 @@ def fix_team_list(dict_list):
     '''
     sorted_job_lst = (sorted(dict_list, key=lambda item: (item['Num-Jobs'], item['Average'])))
     sorted_job_lst.reverse()
-    return sorted_job_lst[:8]
+    return sorted_job_lst[:5]
 
 
 def get_team_value_avgs(format_dict):
@@ -191,40 +192,23 @@ def get_year_value_avgs(format_dict):
     '''
     docstr
     '''
-    dict_keys = [*format_dict]
-    dict_list = []
-    job_type_dict = {}
-    for key in dict_keys:
-        time_lst = []
+    ret_dict = {}
+    for key in format_dict:
+        ret_dict[key] = []
         month_avg_dict = {}
         for entry in format_dict[key]:
-            if key not in job_type_dict:
-                job_type_dict[key] = {}
-
             entry_month = dt.datetime.strftime(entry[1], '%b %Y')
-
             if entry_month not in month_avg_dict:
                 month_avg_dict[entry_month] = [int(entry[0])]
             else:
                 month_avg_dict[entry_month].append(int(entry[0]))
+        for month_key in month_avg_dict:
+            avg_time = round((sum(month_avg_dict[month_key]) / len(month_avg_dict[month_key])), 1)
+            month_avg_dict[month_key] = avg_time
 
-            month_dict_keys = [*month_avg_dict]
-            job_type_dict[key] = month_avg_dict
+        ret_dict[key].append(month_avg_dict)
 
-        for month_key in month_dict_keys:
-            inner_dict = {'Job-Type': '', 'Month': '', 'Avg-Time': ''}
-            inner_dict['Job-Type'] = key
-            time_lst = month_avg_dict[month_key]
-
-            num_jobs = len(time_lst)
-            avg_time = round((sum(time_lst) / num_jobs), 1)
-
-            inner_dict['Avg-Time'] = str(avg_time)
-            inner_dict['Month'] = month_key
-
-            dict_list.append(inner_dict)
-
-    return dict_list
+    return ret_dict
 
 
 def format_week_data(all_individual_data, name_entry, week_start):
@@ -280,10 +264,21 @@ def format_team_data(all_team_data, name_entry, month_start):
     for entry in all_team_data:
         entry_dt = entry[1]
 
-        entry_names_lst = entry[0].split(',')
+        sanitzed_entries = []
+        entry_names_old_lst = entry[0].split(',')
+        for name_e in entry_names_old_lst:
+            clean_name = name_e.strip().lower()
+            sanitzed_entries.append(clean_name)
 
-        if (name_entry in entry_names_lst and len(entry_names_lst) > 1) and (entry_dt >= month_start and entry_dt <= current_date):
+        entry_names_lst = []
+        for tw_name in sanitzed_entries:
+            clean_name = tw_name.strip()
+            new_name = get_real_name(clean_name)
+            entry_names_lst.append(new_name)
+
+        if (name_entry.lower() in sanitzed_entries and len(entry_names_lst) > 1) and (entry_dt >= month_start and entry_dt <= current_date):
             sorted_entries = tuple(sorted(entry_names_lst))
+            
 
             if sorted_entries not in entry_dict:
                 entry_dict[sorted_entries] = [entry[4]]
@@ -292,34 +287,6 @@ def format_team_data(all_team_data, name_entry, month_start):
 
     ret_lst = get_team_value_avgs(entry_dict)
     return ret_lst
-
-
-def insertion_sort(array):
-    '''
-    docstr
-    '''
-    try:
-        if len(array) > 1:
-            for i in range(1, len(array)):
-                key_item = dt.datetime.strptime(array[i]['Month'], '%b %Y')
-                j = i - 1
-                while j >= 0 and dt.datetime.strptime(array[j]['Month'], '%b %Y') > key_item:
-                    array[j + 1][1] = array[j][1]
-                    j -= 1
-                array[j + 1][1] = key_item
-
-        return array
-    except Exception:
-        if len(array) > 1:
-            for i in range(1, len(array)):
-                key_item = dt.datetime.strptime(array[i], '%b')
-                j = i - 1
-                while j >= 0 and dt.datetime.strptime(array[j], '%b') > key_item:
-                    array[j + 1] = array[j]
-                    j -= 1
-                array[j + 1] = key_item
-
-        return array
 
 
 def format_year_data(all_individual_data, name_entry, year_start):
@@ -355,9 +322,36 @@ def format_year_data(all_individual_data, name_entry, year_start):
     months.reverse()
     months.append(current_month.strftime('%b'))
 
-    sorted_ret_lst = insertion_sort(ret_lst)
+    sorted_ret_lst = dict_sort(ret_lst)
 
     return sorted_ret_lst
+
+
+def dict_sort(unsort_dict):
+    '''
+    pass
+    '''
+    sorted_ret_dict = {}
+    dt_months = []
+    for i in range(11, 0, -1):
+        next_month = dt.datetime.today() + relativedelta(months=i)
+        dt_months.append(next_month)
+    dt_months.append(dt.date.today())
+    dt_months.reverse()
+
+    for job_type_entry in unsort_dict:
+        inner_dict_lst = []
+        dict_keys = []
+        [dict_keys.append(str(*key)) for key in job_type_entry]
+
+        dict_keys.sort()
+        if len(dict_keys) > 12:
+            overage = len(dict_keys) - 12
+            dict_keys = dict_keys[overage:]
+
+        i = 0
+        
+
 
 
 def create_report_pages(page_data, pdf_filepaths):
@@ -374,28 +368,60 @@ def create_report_pages(page_data, pdf_filepaths):
         pdf_filepaths.insert(0, full_report)
 
 
-def get_sorted_months(year_vals_dict):
+def get_sorted_months():
     '''
     doctsr
     '''
-    month_lst = []
-    ret_months = []
-    for val in year_vals_dict:
-        month_year_str = val['Month'][:3]
-        month_lst.append(month_year_str)
+    dt_months = []
+    months = []
+    current_month = dt.datetime.today()
 
-    all_months = list(set(month_lst))
-    sorted_months = insertion_sort(all_months)
+    for i in range(11, 0, -1):
+        next_month = current_month + relativedelta(months=i)
+        dt_months.append(next_month)
+    for month in dt_months:
+        months.append(month.strftime('%b'))
 
-    for month_str in sorted_months:
-        try:
-            new_month_str = dt.datetime.strftime(month_str, '%b')
-        except Exception:
-            new_month_str = month_str
+    months.reverse()
+    months.append(current_month.strftime('%b'))
 
-        ret_months.append(new_month_str)
+    return months
 
-    return ret_months
+
+def get_real_name(tw_name_str):
+    '''
+    docstr
+    '''
+    name_dict = {
+        'dee': 'Dee Afflick',
+        'hector': 'Hector Rodriguez',
+        'armany': 'Armany Marrero',
+        'jose': 'Jose DeLeon',
+        'richardc': 'Richard Cuadros',
+        'collin': 'Collin Sager',
+        'carlos1': 'Carlos Rodriguez Escobar',
+        'carlos2': 'Carlos Rubio',
+        'john': 'John Pacheco',
+        'juan': 'Juan Delgado',
+        'sebastian': 'Sebastian Rojas',
+        'cesar': 'Cesar Contreras Sepulveda',
+        'deury': 'Deury Lopez Jimenez',
+        'manuel': 'Manuel Brito Camacho',
+        'max': 'Max Ramos',
+        'olieser': 'Olieser Hernandez Lopez',
+        'oliver': 'Oliver Gonzalez Lopez',
+        'orvin': 'Orvin Irizarry Hernandez',
+        'ivan': 'Ivan Bonilla',
+        'julio': 'Julio Gamboa',
+        'kevin': 'Kevin Bonilla',
+        'luis': 'Luis Otero Castro',
+        'andres': 'Andres'
+    }
+
+    try:
+        return name_dict[tw_name_str.lower()]
+    except Exception:
+        return tw_name_str
 
 
 def create_front_page(page_data):
@@ -415,8 +441,10 @@ def create_front_page(page_data):
 
     pdfmetrics.registerFont(TTFont('Calibri', 'Calibri.ttf'))
 
+    real_name_str = get_real_name(page_data['Name'])
+
     report_canvas.setFont('Calibri', 12)
-    report_canvas.drawString(95, 697, page_data['Name'])
+    report_canvas.drawString(95, 697, real_name_str)
     report_canvas.drawString(77, 674.5, page_data['Job'])
     report_canvas.drawString(87, 657.5, dt.datetime.strftime(page_data['Date'], '%m/%d/%Y'))
 
@@ -439,20 +467,18 @@ def create_front_page(page_data):
 
     for month_data in page_data['Month-Data']:
         report_canvas.drawString(54, month_start_pixel_y, month_data['Job-Type'])
-        report_canvas.drawString(287, month_start_pixel_y, str(month_data['Average']))
-        report_canvas.drawString(422, month_start_pixel_y, str(month_data['Num-Jobs']))
+        report_canvas.drawString(422, month_start_pixel_y, str(month_data['Average']))
+        report_canvas.drawString(514, month_start_pixel_y, str(month_data['Num-Jobs']))
         report_canvas.drawString(494, month_start_pixel_y, month_data['Rank'])
         month_start_pixel_y -= 30
 
     for team_data in page_data['Team-Data']:
         report_canvas.drawString(54, month_start_pixel_y, team_data['Team-Names'])
-        report_canvas.drawString(287, month_start_pixel_y, str(team_data['Average']))
-        report_canvas.drawString(422, month_start_pixel_y, str(team_data['Num-Jobs']))
+        report_canvas.drawString(422, month_start_pixel_y, str(team_data['Average']))
+        report_canvas.drawString(514, month_start_pixel_y, str(team_data['Num-Jobs']))
         month_start_pixel_y -= 20
 
-    months_to_write = get_sorted_months(page_data['Year-Data'])
-
-    months_to_write = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    months_to_write = get_sorted_months()
 
     report_canvas.setFont('Calibri', 10)
     month_str_pixel_x = 140
@@ -460,7 +486,17 @@ def create_front_page(page_data):
         report_canvas.drawString(month_str_pixel_x, 183, month_str)
         month_str_pixel_x += 40
 
-    # year data printing here
+    year_start_pixel_y = 127
+    for key in page_data['Year-Data']:
+        report_canvas.drawString(13, year_start_pixel_y, key)
+        year_data_pixel_x = 580
+        for year_avg_data in page_data['Year-Data'][key]:
+            month_keys = [*year_avg_data]
+            month_keys.reverse()
+            for month_key in month_keys:
+                report_canvas.drawString(year_data_pixel_x, year_start_pixel_y, str(year_avg_data[month_key]))
+                year_data_pixel_x -= 40
+        year_start_pixel_y -= 30
 
     # make modifications here
     report_canvas.save()
