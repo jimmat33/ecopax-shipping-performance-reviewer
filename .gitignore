@@ -16,3 +16,7 @@ ecopax-shipping-performance-reviewer/ecopax-shipping-performance-reviewer/Perfor
 ecopax-shipping-performance-reviewer/ecopax-shipping-performance-reviewer/performance-review.db
 
 *.xlsx
+
+ecopax-shipping-performance-reviewer/Report Card Cache/
+
+ecopax-shipping-performance-reviewer/Report Card Reports/

@@ -14,9 +14,9 @@ def db_connect():
     docstr
     '''
     if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')):
+                      ('Ecopax-Performance-Reviewer-Program-Files\\performance-review.db')):
         db_file_name = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')
+            'Ecopax-Performance-Reviewer-Program-Files\\performance-review.db')
     else:
         db_file_name = os.path.abspath('performance-review.db')
     db_conn = None
@@ -81,7 +81,7 @@ def db_add_performance_entry(performance_prop_list, add_type):
                                                 AND JobDate =? '''
                         cur.execute(check_sql_statement, [performance_prop_list[0],
                                                           performance_prop_list[4],
-                                                          performance_prop_list[2]])
+                                                          performance_prop_list[1]])
                         rows = cur.fetchall()
 
                         performance_prop_list[0] = re.sub('[\"\']', '', performance_prop_list[0])

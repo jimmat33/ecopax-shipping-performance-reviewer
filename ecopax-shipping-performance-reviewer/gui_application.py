@@ -1,15 +1,17 @@
 '''
 docstr
 '''
+import timeit
 import os
 import subprocess
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import Label, filedialog, ttk, messagebox
 from tkinter.ttk import Scrollbar, Button, Frame
 from create_report import create_report
 from performance_review_db import (db_get_excel_file, db_get_all_excel_filepaths,
                                    db_remove_excel_file, db_clear_database)
 from excel_file import TWExportExcelFile
+from report_card import create_report_cards
 
 
 class PerformanceReviewGUI():
@@ -28,7 +30,7 @@ class PerformanceReviewGUI():
             self.root.tk.call('wm', 'iconphoto', self.root._w, img)
         except Exception:
             img = tk.PhotoImage(file=(os.path.abspath
-                                      ('Ecopax-Performance-Reviwer-Program-Files\\gui_icon.png')))
+                                      ('Ecopax-Performance-Reviewer-Program-Files\\gui_icon.png')))
             self.root.tk.call('wm', 'iconphoto', self.root._w, img)
         self.excel_index = 1
 
@@ -38,11 +40,14 @@ class PerformanceReviewGUI():
         self.remove_sheet_button = Button(self.root, text='Remove Spreadsheet', state='normal',
                                           command=self.remove_spreadsheet_btn_click)
 
-        self.goto_report_loc_button = Button(self.root, text='Go To Report Folder', state='normal',
+        self.goto_report_loc_button = Button(self.root, text='Go To Excel Report Folder', state='normal',
                                              command=self.open_file_loc)
 
-        self.generate_report_button = Button(self.root, text='Generate Report', state='normal',
+        self.generate_report_button = Button(self.root, text='Generate Reports', state='normal',
                                              command=self.generate_report)
+
+        self.report_card_button = Button(self.root, text='Go To Report Card Folder', state='normal',
+                                         command=self.go_to_report_cards_btn_click)
 
         self.excel_sheet_frame = Frame(self.root)
 
@@ -64,8 +69,9 @@ class PerformanceReviewGUI():
         self.import_sheet_button.place(x=25, y=35, width=220, height=55)
         self.remove_sheet_button.place(x=25, y=105, width=220, height=55)
         self.excel_sheet_frame.place(x=300, y=35, width=485, height=240)
-        self.goto_report_loc_button.place(x=585, y=280, width=185, height=40)
-        self.generate_report_button.place(x=385, y=280, width=185, height=40)
+        self.goto_report_loc_button.place(x=25, y=245, width=220, height=55)
+        self.generate_report_button.place(x=25, y=175, width=220, height=55)
+        self.report_card_button.place(x=25, y=315, width=220, height=55)
 
         excel_vertical_scroll = Scrollbar(self.excel_sheet_frame)
         excel_vertical_scroll.pack(side=tk.RIGHT, fill=tk.Y)
@@ -99,9 +105,9 @@ class PerformanceReviewGUI():
         filebrowser_path = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
 
         if os.path.exists(os.path.abspath
-                          ('Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')):
+                          ('Ecopax-Performance-Reviewer-Program-Files\\Performance Review Reports')):
             path = os.path.abspath(
-                'Ecopax-Performance-Reviwer-Program-Files\\Performance Review Reports')
+                'Ecopax-Performance-Reviewer-Program-Files\\Performance Review Reports')
         else:
             path = os.path.abspath('Performance Review Reports')
         try:
@@ -116,33 +122,44 @@ class PerformanceReviewGUI():
         '''
         docstr
         '''
-        # pylint: disable=E1102
-        filename_list = filedialog.askopenfilenames(initialdir="", title="Select a File",
-                                                    filetypes=(("all files", "*.*"),))
+        try:
+            # pylint: disable=E1102
+            filename_list = filedialog.askopenfilenames(initialdir="", title="Select a File",
+                                                        filetypes=(("all files", "*.*"),))
+            start = timeit.default_timer()
+            self.root.withdraw()
+            splash = Splash(self.root)
+            for filename in filename_list:
+                TWExportExcelFile(filename)
 
-        for filename in filename_list:
-            TWExportExcelFile(filename)
+                filename_spl = filename.split('.')
+                new_filename = filename_spl[0] + '.csv'
 
-            filename_spl = filename.split('.')
-            new_filename = filename_spl[0] + '.csv'
+                file_lst = db_get_excel_file(new_filename)
 
-            file_lst = db_get_excel_file(new_filename)
+                filepath_parts = file_lst[0][0].split('/')
+                formatted_correct = filepath_parts[3:-1]
+                filepath_str = ''
 
-            filepath_parts = file_lst[0][0].split('/')
-            formatted_correct = filepath_parts[3:-1]
-            filepath_str = ''
+                for part in formatted_correct:
+                    if part == formatted_correct[0]:
+                        filepath_str = filepath_str + part
+                    else:
+                        filepath_str = filepath_str + '/' + part
 
-            for part in formatted_correct:
-                if part == formatted_correct[0]:
-                    filepath_str = filepath_str + part
-                else:
-                    filepath_str = filepath_str + '/' + part
+                formatted_filename = filepath_parts[-1].split('.')[0]
 
-            formatted_filename = filepath_parts[-1].split('.')[0]
+                self.excel_sheet_frame.insert(parent='', index='end', iid=self.excel_index, text='',
+                                            values=(formatted_filename, filepath_str, file_lst[0][2]))
+                self.excel_index += 1
 
-            self.excel_sheet_frame.insert(parent='', index='end', iid=self.excel_index, text='',
-                                          values=(formatted_filename, filepath_str, file_lst[0][2]))
-            self.excel_index += 1
+                stop = timeit.default_timer()
+                print(f'\n\nDone, Time Ran: {(stop - start)/60} minutes')
+
+            splash.destroy()
+            self.root.deiconify()
+        except Exception:
+            messagebox.showerror('Import Error', 'There was an error importing your file. Please try another file, or contact James Mattison')
 
     def remove_spreadsheet_btn_click(self):
         '''
@@ -168,13 +185,43 @@ class PerformanceReviewGUI():
                 self.excel_sheet_frame.delete(selected_item_index)
 
         except Exception:
+            messagebox.showerror('Removal Error', 'There was an error removing your file. Please try another file, or contact James Mattison')
+
+    def go_to_report_cards_btn_click(self):
+        '''
+        docstr
+        '''
+        filebrowser_path = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
+
+        if os.path.exists(os.path.abspath
+                          ('Ecopax-Performance-Reviewer-Program-Files\\Report Card Reports')):
+            path = os.path.abspath(
+                'Ecopax-Performance-Reviewer-Program-Files\\Report Card Reports')
+        else:
+            path = os.path.abspath('Report Card Reports')
+        try:
+            if os.path.isdir(path):
+                subprocess.run([filebrowser_path, path], check=True)
+            elif os.path.isfile(path):
+                subprocess.run([filebrowser_path, '/select,', os.path.normpath(path)], check=True)
+        except Exception:
             pass
 
     def generate_report(self):
         '''
         docstr
         '''
-        create_report()
+        try:
+            self.root.withdraw()
+            splash = Splash(self.root)
+
+            create_report()
+            create_report_cards()
+
+            splash.destroy()
+            self.root.deiconify()
+        except Exception:
+            messagebox.showerror('Report Error', 'There was an error creating your report files. Please try another Transwide file, or contact James Mattison')
 
     def on_closing(self):
         '''
@@ -188,3 +235,34 @@ class PerformanceReviewGUI():
         docstr
         '''
         db_clear_database()
+
+        if os.path.exists(os.path.abspath
+                          ('Ecopax-Performance-Reviewer-Program-Files\\Report Card Cache')):
+            f_path = os.path.abspath(
+                'Ecopax-Performance-Reviewer-Program-Files\\Report Card Cache')
+        else:
+            f_path = os.path.abspath('Report Card Cache')
+
+        for f in os.listdir(f_path):
+            os.remove(os.path.join(f_path, f))
+
+
+class Splash(tk.Toplevel):
+    def __init__(self, parent):
+        tk.Toplevel.__init__(self, parent)
+        self.title("Shipping Performance Reviewer")
+        self.geometry('250x100')
+
+        try:
+            img = tk.PhotoImage(file=(os.path.abspath('gui_icon.png')))
+            self.tk.call('wm', 'iconphoto', self._w, img)
+        except Exception:
+            img = tk.PhotoImage(file=(os.path.abspath
+                                      ('Ecopax-Performance-Reviewer-Program-Files\\gui_icon.png')))
+            self.tk.call('wm', 'iconphoto', self._w, img)
+
+        self.wait_label = Label(self, text='App Working\nPlease Wait...', state='normal', font=('Arial', 24), anchor=tk.CENTER)
+        self.wait_label.pack(anchor=tk.CENTER)
+
+        # required to make window show before the program gets to the mainloop
+        self.update()
