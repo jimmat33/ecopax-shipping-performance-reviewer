@@ -22,19 +22,19 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from performance_review_db import db_get_individual_data, db_get_team_data
 
+pdf_filepaths = []
 
 def create_report_cards():
     '''
     docstr
     '''
     start = timeit.default_timer()
-    pdf_filepaths = []
 
     data_lst = get_report_data()
     for data_entry in data_lst:
         try:
-            create_report_pages(data_entry, pdf_filepaths)
-        except Exception as exc:
+            create_report_pages(data_entry)
+        except Exception:
             traceback.print_exc()
 
     final_report_fp = create_final_report(pdf_filepaths)
@@ -379,7 +379,7 @@ def dict_sort(unsort_dict):
     return sorted_ret_dict
 
 
-def create_report_pages(page_data, pdf_filepaths):
+def create_report_pages(page_data):
     '''
     docstr
     '''
@@ -585,6 +585,7 @@ def create_final_report(pdf_filepaths):
     f_name = '\\ReportCardReport-' + dt.datetime.now().strftime('%m-%d-%y-%H-%M-%S') + '.pdf'
 
     output_fp = f_path + f_name
+    pdf_filepaths = sorted(list(set(pdf_filepaths)))
     for pdf_fp in pdf_filepaths:
         try:
             pdf_merger.append(pdf_fp)
