@@ -14,9 +14,9 @@ def db_connect():
     docstr
     '''
     if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')):
+                      ('Ecopax-Performance-Reviewer-Program-Files\\performance-review.db')):
         db_file_name = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\performance-review.db')
+            'Ecopax-Performance-Reviewer-Program-Files\\performance-review.db')
     else:
         db_file_name = os.path.abspath('performance-review.db')
     db_conn = None

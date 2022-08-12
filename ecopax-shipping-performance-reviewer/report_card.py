@@ -332,26 +332,51 @@ def dict_sort(unsort_dict):
     pass
     '''
     sorted_ret_dict = {}
+    sorted_month_order = [None] * 12
     dt_months = []
+    currentDate = dt.date.today()
+    months_start_date = dt.date(currentDate.year, currentDate.month, 1)
     for i in range(11, 0, -1):
-        next_month = dt.datetime.today() + relativedelta(months=i)
+        next_month = months_start_date - relativedelta(months=i)
         dt_months.append(next_month)
-    dt_months.append(dt.date.today())
+    dt_months.append(months_start_date)
     dt_months.reverse()
 
     for job_type_entry in unsort_dict:
         inner_dict_lst = []
-        dict_keys = []
-        [dict_keys.append(str(*key)) for key in job_type_entry]
+        inner_dict = unsort_dict[job_type_entry][0]
 
-        dict_keys.sort()
-        if len(dict_keys) > 12:
-            overage = len(dict_keys) - 12
-            dict_keys = dict_keys[overage:]
+        months_in_dict = [*inner_dict]
 
-        i = 0
-        
+        dt_data_months_lst = []
+        [dt_data_months_lst.append(dt.datetime.strptime(month_ent, '%b %Y')) for month_ent in months_in_dict]
 
+        dt_data_months_lst.sort()
+        if len(dt_data_months_lst) > 12:
+            overage = len(dt_data_months_lst) - 12
+            dt_data_months_lst = dt_data_months_lst[overage:]
+
+
+        for month_entry in dt_data_months_lst:
+          try:
+            sorted_index = dt_months.index(month_entry.date())
+            if sorted_index != -1:
+              sorted_month_order[sorted_index] = month_entry
+          except Exception:
+            traceback.print_exc()
+  
+        for entry in sorted_month_order:
+          try:
+            month_as_str = dt.datetime.strftime(entry, '%b %Y')
+            
+            data_val = unsort_dict[job_type_entry][0][month_as_str]
+            inner_dict_lst.append(data_val)
+          except Exception:
+            inner_dict_lst.append(None)
+  
+        sorted_ret_dict[job_type_entry] = inner_dict_lst
+
+    return sorted_ret_dict
 
 
 def create_report_pages(page_data, pdf_filepaths):
@@ -429,9 +454,9 @@ def create_front_page(page_data):
     docstr
     '''
     if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
+                      ('Ecopax-Performance-Reviewer-Program-Files\\Report Card Cache')):
         f_path = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')
+            'Ecopax-Performance-Reviewer-Program-Files\\Report Card Cache')
     else:
         f_path = os.path.abspath('Report Card Cache')
 
@@ -490,12 +515,11 @@ def create_front_page(page_data):
     for key in page_data['Year-Data']:
         report_canvas.drawString(13, year_start_pixel_y, key)
         year_data_pixel_x = 580
-        for year_avg_data in page_data['Year-Data'][key]:
-            month_keys = [*year_avg_data]
-            month_keys.reverse()
-            for month_key in month_keys:
-                report_canvas.drawString(year_data_pixel_x, year_start_pixel_y, str(year_avg_data[month_key]))
-                year_data_pixel_x -= 40
+        year_avg_data = page_data['Year-Data'][key]
+        for month_key in year_avg_data:
+            if isinstance(month_key, float):
+                report_canvas.drawString(year_data_pixel_x, year_start_pixel_y, str(month_key))
+            year_data_pixel_x -= 40
         year_start_pixel_y -= 30
 
     # make modifications here
@@ -503,14 +527,17 @@ def create_front_page(page_data):
     packet.seek(0)
 
     if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\program-dependables\\(PDF)Transwide Report Card PDF.pdf')):
+                      ('Ecopax-Performance-Reviewer-Program-Files\\program-dependables\\(PDF)Transwide Report Card PDF.pdf')):
         template_pdf_fp = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\program-dependables\\(PDF)Transwide Report Card PDF.pdf')
+            'Ecopax-Performance-Reviewer-Program-Files\\program-dependables\\(PDF)Transwide Report Card PDF.pdf')
     else:
         template_pdf_fp = os.path.abspath('program-dependables\\(PDF)Transwide Report Card PDF.pdf')
 
     new_pdf = PdfFileReader(packet)
-    exisiting_pdf = PdfFileReader(open(template_pdf_fp, 'rb'))
+    try:
+        exisiting_pdf = PdfFileReader(open(template_pdf_fp, 'rb'))
+    except Exception:
+        pass
 
     output = PdfFileWriter()
 
@@ -519,9 +546,12 @@ def create_front_page(page_data):
 
     output.addPage(template_page)
 
-    output_stream = open(output_fp, 'wb')
-    output.write(output_stream)
-    output_stream.close()
+    try:
+        output_stream = open(output_fp, 'wb')
+        output.write(output_stream)
+        output_stream.close()
+    except Exception:
+        pass
 
     return output_fp
 
@@ -531,9 +561,9 @@ def get_back_page():
     return back page filepath
     '''
     if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\program-dependables\\(PDF)Transwide Report Card Back.pdf')):
+                      ('Ecopax-Performance-Reviewer-Program-Files\\program-dependables\\(PDF)Transwide Report Card Back.pdf')):
         output_fp = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\program-dependables\\(PDF)Transwide Report Card Back.pdf')
+            'Ecopax-Performance-Reviewer-Program-Files\\program-dependables\\(PDF)Transwide Report Card Back.pdf')
     else:
         output_fp = os.path.abspath('program-dependables\\(PDF)Transwide Report Card Back.pdf')
     return output_fp
@@ -546,9 +576,9 @@ def create_final_report(pdf_filepaths):
     pdf_merger = PdfFileMerger()
 
     if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Reports')):
+                      ('Ecopax-Performance-Reviewer-Program-Files\\Report Card Reports')):
         f_path = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Reports')
+            'Ecopax-Performance-Reviewer-Program-Files\\Report Card Reports')
     else:
         f_path = os.path.abspath('Report Card Reports')
 
@@ -556,7 +586,10 @@ def create_final_report(pdf_filepaths):
 
     output_fp = f_path + f_name
     for pdf_fp in pdf_filepaths:
-        pdf_merger.append(pdf_fp)
+        try:
+            pdf_merger.append(pdf_fp)
+        except Exception:
+            pass
 
     with Path(output_fp).open(mode='wb') as output_file:
         pdf_merger.write(output_file)
@@ -572,21 +605,23 @@ def merge_single_report(front_canvas, page_data):
 
     pdf_merger = PdfFileMerger()
     if os.path.exists(os.path.abspath
-                      ('Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')):
+                    ('Ecopax-Performance-Reviewer-Program-Files\\Report Card Cache')):
         f_path = os.path.abspath(
-            'Ecopax-Performance-Reviwer-Program-Files\\Report Card Cache')
+            'Ecopax-Performance-Reviewer-Program-Files\\Report Card Cache')
     else:
         f_path = os.path.abspath('Report Card Cache')
 
     f_name = page_data['Name'] + '-fullreport.pdf'
 
     output_fp = f_path + '\\' + f_name
+    try:
+        pdf_merger.append(front_canvas)
+        pdf_merger.append(back_page)
 
-    pdf_merger.append(front_canvas)
-    pdf_merger.append(back_page)
-
-    with Path(output_fp).open(mode='wb') as output_file:
-        pdf_merger.write(output_file)
+        with Path(output_fp).open(mode='wb') as output_file:
+            pdf_merger.write(output_file)
+    except Exception:
+        pass
 
     return output_fp
 

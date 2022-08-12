@@ -1,4 +1,5 @@
-cd "C:\USERS\jmattison\Desktop\Performance Reviewer\ecopax-shipping-performance-reviewer
+cd ecopax-shipping-performance-reviewer
 python setup.py install
 python setup.py py2exe
-ren dist Ecopax-Performance-Reviwer-Program-Files
+robocopy dist-cpy dist /E
+ren dist Ecopax-Performance-Reviewer-Program-Files
