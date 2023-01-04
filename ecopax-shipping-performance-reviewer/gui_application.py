@@ -26,11 +26,11 @@ class PerformanceReviewGUI():
         self.root.title("Shipping Performance Reviewer")
         self.root.resizable(False, False)
         try:
-            img = tk.PhotoImage(file=(os.path.abspath('gui_icon.png')))
+            img = tk.PhotoImage(file=(os.path.abspath('ecopax-shipping-performance-reviewer\\gui_icon.png')))
             self.root.tk.call('wm', 'iconphoto', self.root._w, img)
         except Exception:
             img = tk.PhotoImage(file=(os.path.abspath
-                                      ('Ecopax-Performance-Reviewer-Program-Files\\gui_icon.png')))
+                                      ('gui_icon.png')))
             self.root.tk.call('wm', 'iconphoto', self.root._w, img)
         self.excel_index = 1
 
