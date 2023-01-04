@@ -105,9 +105,9 @@ class PerformanceReviewGUI():
         filebrowser_path = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
 
         if os.path.exists(os.path.abspath
-                          ('Ecopax-Performance-Reviewer-Program-Files\\Performance Review Reports')):
+                          ('ecopax-shipping-performance-reviewer\\Performance Review Reports')):
             path = os.path.abspath(
-                'Ecopax-Performance-Reviewer-Program-Files\\Performance Review Reports')
+                'ecopax-shipping-performance-reviewer\\Performance Review Reports')
         else:
             path = os.path.abspath('Performance Review Reports')
         try:
@@ -194,9 +194,9 @@ class PerformanceReviewGUI():
         filebrowser_path = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
 
         if os.path.exists(os.path.abspath
-                          ('Ecopax-Performance-Reviewer-Program-Files\\Report Card Reports')):
+                          ('ecopax-shipping-performance-reviewer\\Report Card Reports')):
             path = os.path.abspath(
-                'Ecopax-Performance-Reviewer-Program-Files\\Report Card Reports')
+                'ecopax-shipping-performance-reviewer\\Report Card Reports')
         else:
             path = os.path.abspath('Report Card Reports')
         try:
@@ -237,9 +237,9 @@ class PerformanceReviewGUI():
         db_clear_database()
 
         if os.path.exists(os.path.abspath
-                          ('Ecopax-Performance-Reviewer-Program-Files\\Report Card Cache')):
+                          ('ecopax-shipping-performance-reviewer\\Report Card Cache')):
             f_path = os.path.abspath(
-                'Ecopax-Performance-Reviewer-Program-Files\\Report Card Cache')
+                'ecopax-shipping-performance-reviewer\\Report Card Cache')
         else:
             f_path = os.path.abspath('Report Card Cache')
 
@@ -258,7 +258,7 @@ class Splash(tk.Toplevel):
             self.tk.call('wm', 'iconphoto', self._w, img)
         except Exception:
             img = tk.PhotoImage(file=(os.path.abspath
-                                      ('Ecopax-Performance-Reviewer-Program-Files\\gui_icon.png')))
+                                      ('ecopax-shipping-performance-reviewer\\gui_icon.png')))
             self.tk.call('wm', 'iconphoto', self._w, img)
 
         self.wait_label = Label(self, text='App Working\nPlease Wait...', state='normal', font=('Arial', 24), anchor=tk.CENTER)
