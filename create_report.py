@@ -7,19 +7,9 @@ from datetime import date, datetime
 from pathlib import Path
 import win32com.client as win32
 import xlsxwriter
-from performance_review_db import db_get_individual_data, db_get_team_data
 win32c = win32.constants
 win32.gencache.is_readonly = False
 win32.gencache.GetGeneratePath()
-# pylint: disable=W0703
-# pylint: disable=R0914
-
-
-def create_report():
-    '''
-    docstr
-    '''
-    create_excel_file()
 
 
 def create_excel_file():
