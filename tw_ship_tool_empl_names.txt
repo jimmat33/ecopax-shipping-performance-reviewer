@@ -1,0 +1,33 @@
+This file contains the names of the employees whose data is processed by the program.
+
+Since Transwide uses abbreviated names, this file helps make the conversion from the transwide name
+to the actual name of the employee for the report card.
+
+People can be added or removed from this list by simply adding or removing thier line.
+
+Please follow the convention below:
+<transwide name> = <actual employee name>
+------------------------------------------------------------------------------------------------------
+dee = Dee Afflick
+hector = Hector Rodriguez
+armany = Armany Marrero
+jose = Jose DeLeon
+richardc = Richard Cuadros
+collin = Collin Sager
+carlos1 = Carlos Rodriguez Escobar
+carlos2 = Carlos Rubio
+john = John Pacheco
+juan = Juan Delgado
+sebastian = Sebastian Rojas
+cesar = Cesar Contreras Sepulveda
+deury = Deury Lopez Jimenez
+manuel = Manuel Brito Camacho
+max = Max Ramos
+olieser = Olieser Hernandez Lopez
+oliver = Oliver Gonzalez Lopez
+orvin = Orvin Irizarry Hernandez
+ivan = Ivan Bonilla
+julio = Julio Gamboa
+kevin = Kevin Bonilla
+luis = Luis Otero Castro
+andres = Andres

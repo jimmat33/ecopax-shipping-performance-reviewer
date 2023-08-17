@@ -1,4 +1,5 @@
 import PySimpleGUI as sg
+from report_card import get_data_from_tw_excel_sheet
 
 BACKGROUND_GREY_HEX = '#B3B3B3'
 ECOPAX_GREEN_HEX = '#8DC63F'
@@ -8,9 +9,72 @@ BLACK_HEX = '#000000'
 TITLE_FONT = ('Arial', 18)
 
 
+def import_sheet_btn_handler(gui_values):
+    """
+    """
+    # Get file name from file browser
+    # verify that it is a valid file
+    # send it to the function to handle imports
+    # pull values from drop downs regarding column location
+    # set status text
+
+    # Getting value
+    user_input_fp = gui_values['-tw_file_browser-']
+
+    # Splitting to pull filename
+    file_name_w_ext = user_input_fp.split('\\')[-1]
+
+    # Getting file type via file extension
+    file_ext = file_name_w_ext.split('.')[-1]
+
+    if file_ext != 'xls' and file_ext != 'xlsx':
+        return 'Error: The file was not a valid excel sheet'
+
+    # Reading data into a dictionary and returning it
+    excel_sheet_data_dict = get_data_from_tw_excel_sheet(user_input_fp)
+    return excel_sheet_data_dict
+
+
+def generate_report_btn_handler():
+    """
+    """
+    # check that a file has been imported
+    # generate report with that file
+    pass
+
+
+def go_to_report_btn_handler():
+    """
+    """
+    # Open file location for the reports, based on current user settings
+    pass
+
+
+def default_col_loc_btn_handler():
+    """
+    """
+    # open text file that stores the default column locations
+    pass
+
+
+def report_output_loc_btn_handler():
+    """
+    """
+    # set the output directory for the report
+    pass
+
+
+def open_logs_btn_handler():
+    """
+    """
+    # open the folder containing the logs, store this in a specific spot on the machine so it doesn't get deleted
+    pass
+
+
 def gui_command_loop():
     """
     """
+    global tw_default_colmns
     layout = build_gui()
     sg.theme_background_color(BACKGROUND_GREY_HEX)
 
@@ -20,33 +84,22 @@ def gui_command_loop():
         event, values = window.read()
 
         if event == '-import_sheet_btn-':
-            # Get file name from file browser
-            # verify that it is a valid file
-            # send it to the function to handle imports
-            # pull values from drop downs regarding column location
-            # set status text
-            pass
+            import_sheet_btn_handler(values)
 
         if event == '-generate_report_btn-':
-            # check that a file has been imported
-            # generate report with that file
-            pass
+            generate_report_btn_handler()
 
         if event == '-go_to_report_btn-':
-            # Open file location for the reports, based on current user settings
-            pass
+            go_to_report_btn_handler()
 
         if event == '-default_column_loc_btn-':
-            # open text file that stores the default column locations
-            pass
+            default_col_loc_btn_handler()
 
         if event == '-report_output_loc_btn-':
-            # set the output directory for the report
-            pass
+            report_output_loc_btn_handler()
 
         if event == '-open_logs_btn-':
-            # open the folder containing the logs, store this in a specific spot on the machine so it doesn't get deleted
-            pass
+            open_logs_btn_handler()
 
         # If user closes window or clicks cancel
         if event == sg.WIN_CLOSED or event == 'Cancel':
@@ -185,7 +238,7 @@ def build_gui() -> list:
 
     report_out_txt_input =                  sg.Input(readonly=True,
                                                      size=(50, 10),
-                                                     pad=(5, (35, 20)),
+                                                     pad=(5, (35, 5)),
                                                      key='-report_out_txt_input-')
 
     report_output_file_browser =            sg.FileBrowse(button_color=ECOPAX_GREEN_HEX,
@@ -194,14 +247,24 @@ def build_gui() -> list:
 
     report_output_loc_btn =                 sg.Button('Change Report Output Location',
                                                       button_color=ECOPAX_GREEN_HEX,
-                                                      pad=(5, (5, 20)),
+                                                      pad=(5, (3, 20)),
                                                       key='-report_output_loc_btn-')
 
     report_output_chng_status_txt =         sg.Text('',
                                                     background_color=BACKGROUND_GREY_HEX,
                                                     text_color=BLACK_HEX,
-                                                    pad=(5, (5, 20)),
+                                                    pad=(5, (5, 10)),
                                                     key='-report_output_chng_status_txt-')
+
+    set_employee_alias_txt =                sg.Text('Set Employee Names From Transwide: ',
+                                                    background_color=BACKGROUND_GREY_HEX,
+                                                    pad=(5, (5, 20)),
+                                                    text_color=BLACK_HEX)
+
+    set_employee_alias_btn =                sg.Button('Set Emplyee Names',
+                                                      button_color=ECOPAX_GREEN_HEX,
+                                                      pad=(5, (5, 20)),
+                                                      key='-set_employee_alias_btn-')
 
     open_logs_btn =                         sg.Button('Open Error Logs',
                                                       button_color=ECOPAX_GREEN_HEX,
@@ -230,6 +293,7 @@ def build_gui() -> list:
                    [report_output_loc_txt, report_out_txt_input, report_output_file_browser],
                    [report_output_loc_btn],
                    [report_output_chng_status_txt],
+                   [set_employee_alias_txt, set_employee_alias_btn],
                    [open_logs_btn]]
 
     tab_group = [sg.TabGroup(background_color=BACKGROUND_GREY_HEX,
