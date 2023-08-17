@@ -2,7 +2,7 @@
     "python.linting.pylamaEnabled": false,
     "python.linting.enabled": true,
     "python.linting.flake8Args": [
-        "--ignore=E501",
+        "--ignore=E501,E222",
     ],
     "python.linting.flake8Enabled": true,
 }
