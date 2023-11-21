@@ -1,0 +1,8 @@
+{
+    "python.linting.pylamaEnabled": false,
+    "python.linting.enabled": true,
+    "python.linting.flake8Args": [
+        "--ignore=E501",
+    ],
+    "python.linting.flake8Enabled": true,
+}
